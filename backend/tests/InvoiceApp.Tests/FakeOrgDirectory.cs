@@ -64,6 +64,31 @@ internal sealed class FakeOrgDirectory : IOrgDirectory
     public FakeOrgDirectory WithoutAdmins() =>
         new(_businessUnits, _accounts, _projects, _allocations, Array.Empty<string>());
 
+    public FakeOrgDirectory WithAdmins(params string[] usernames) =>
+        new(_businessUnits, _accounts, _projects, _allocations, usernames);
+
+    public FakeOrgDirectory WithProjectDeliveryManager(string projectId, string? username) =>
+        new(
+            _businessUnits,
+            _accounts,
+            _projects
+                .Select(project => string.Equals(project.Id, projectId, StringComparison.OrdinalIgnoreCase)
+                    ? project with { DeliveryManagerUsername = username }
+                    : project)
+                .ToArray(),
+            _allocations,
+            _adminUsernames);
+
+    public FakeOrgDirectory WithProjectWithoutAccount(
+        string projectId,
+        string? deliveryManagerUsername = null) =>
+        new(
+            _businessUnits,
+            _accounts,
+            _projects.Append(new Project(projectId, "MISSING-ACCOUNT", deliveryManagerUsername)).ToArray(),
+            _allocations,
+            _adminUsernames);
+
     public IReadOnlyList<BusinessUnit> GetBusinessUnits() => _businessUnits;
 
     public BusinessUnit? GetBusinessUnit(string businessUnitId) =>

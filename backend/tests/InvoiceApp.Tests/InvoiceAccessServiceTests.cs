@@ -57,6 +57,43 @@ public class InvoiceAccessServiceTests
         Assert.Empty(repository.GetAll());
     }
 
+    [Theory]
+    [InlineData("", 12_500, "PRJ-PORTAL", "demo.requester", "Customer name is required.")]
+    [InlineData("Portal work", 0, "PRJ-PORTAL", "demo.requester", "Amount must be greater than zero.")]
+    [InlineData("Portal work", 12_500, "", "demo.requester", "Project is required.")]
+    [InlineData("Portal work", 12_500, "PRJ-PORTAL", " ", "Signed-in user is required.")]
+    public void CreateDraft_RejectsInvalidInputWithoutAddingInvoice(
+        string customerName,
+        decimal amount,
+        string projectId,
+        string createdBy,
+        string expectedMessage)
+    {
+        var repository = new FakeInvoiceRepository();
+        var service = ServiceFor(repository);
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => service.CreateDraft(customerName, amount, projectId, createdBy));
+
+        Assert.Equal(expectedMessage, exception.Message);
+        Assert.Empty(repository.GetAll());
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void CreateDraft_DeniesUnknownProjectWithoutAddingInvoice()
+    {
+        var repository = new FakeInvoiceRepository();
+        var service = ServiceFor(repository);
+
+        var exception = Assert.Throws<ApprovalDeniedException>(
+            () => service.CreateDraft("Portal work", 12_500m, "PRJ-MISSING", "demo.requester"));
+
+        Assert.Equal("Project PRJ-MISSING was not found.", exception.Message);
+        Assert.Empty(repository.GetAll());
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
     [Fact]
     public void GetProjectOptionsFor_ReturnsOnlyProjectsWhereUserIsAllocated()
     {
@@ -91,6 +128,29 @@ public class InvoiceAccessServiceTests
         Assert.Equal(
             new[] { "INV-PORTAL", "INV-MOBILE", "INV-ERP" },
             InvoiceIds(service.GetInvoicesFor("demo.admin")));
+    }
+
+    [Theory]
+    [InlineData("PRJ-MISSING")]
+    [InlineData("PRJ-ORPHAN")]
+    public void GetInvoicesFor_ExcludesInvoicesWithoutAProjectAccount(string projectId)
+    {
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithProjectWithoutAccount("PRJ-ORPHAN");
+        var repository = new FakeInvoiceRepository(
+            InvoiceFor("INV-UNROUTED", projectId, InvoiceStatus.PendingApproval));
+        var service = ServiceFor(repository, directory);
+
+        Assert.Empty(service.GetInvoicesFor("unrelated.user"));
+    }
+
+    [Fact]
+    public void GetInvoicesFor_DoesNotTreatAnEmptyAdminListAsAllowingEveryone()
+    {
+        var directory = FakeOrgDirectory.CreateDemo().WithoutAdmins();
+        var service = ServiceFor(SeedInvoices(), directory);
+
+        Assert.Empty(service.GetInvoicesFor("unrelated.user"));
     }
 
     [Fact]
@@ -144,8 +204,10 @@ public class InvoiceAccessServiceTests
         Assert.Null(service.GetWaitingOn(pending));
     }
 
-    private static InvoiceAccessService ServiceFor(FakeInvoiceRepository repository) =>
-        new(repository, FakeOrgDirectory.CreateDemo());
+    private static InvoiceAccessService ServiceFor(
+        FakeInvoiceRepository repository,
+        IOrgDirectory? directory = null) =>
+        new(repository, directory ?? FakeOrgDirectory.CreateDemo());
 
     private static FakeInvoiceRepository SeedInvoices(params Invoice[] additionalInvoices)
     {

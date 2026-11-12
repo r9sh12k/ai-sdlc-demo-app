@@ -24,6 +24,47 @@ public class ApprovalServiceTests
         Assert.Equal(1, repository.UpdateCount);
     }
 
+    [Theory]
+    [InlineData(50_000.00, "demo.manager", null)]
+    [InlineData(50_000.01, "demo.director", null)]
+    [InlineData(500_000.00, "demo.director", null)]
+    [InlineData(500_000.01, "demo.manager", "demo.director")]
+    public void Submit_SnapshotsApproversAtEachAmountBoundary(
+        decimal amount,
+        string expectedFirstApprover,
+        string? expectedSecondApprover)
+    {
+        var repository = new FakeInvoiceRepository(
+            InvoiceWith("INV-1", InvoiceStatus.Draft, amount));
+        var service = ServiceFor(repository);
+
+        service.Submit("INV-1", "demo.requester");
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(expectedFirstApprover, storedInvoice.RoutedApprover1);
+        Assert.Equal(expectedSecondApprover, storedInvoice.RoutedApprover2);
+        Assert.Equal(InvoiceStatus.PendingApproval, storedInvoice.Status);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Submit_DeniesWhenNoApproverIsAvailableWithoutMutation()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.Draft, 30_000m, "PRJ-ERP");
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-ENTERPRISE", null)
+            .WithoutAdmins();
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = ServiceFor(repository, directory);
+
+        var exception = Assert.Throws<ApprovalDeniedException>(
+            () => service.Submit("INV-1", "demo.requester2"));
+
+        Assert.Equal("No approver available for this project.", exception.Message);
+        AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
     [Fact]
     public void Submit_RejectsInvoiceThatIsNotADraft()
     {
@@ -95,6 +136,21 @@ public class ApprovalServiceTests
         Assert.Equal("demo.director", storedInvoice.DecidedBy);
         Assert.Null(storedInvoice.FirstApprovedBy);
         Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_AtDirectorLimitUsesRoutedSecondStepEvenWhenFirstApproverIsReused()
+    {
+        var invoice = PendingInvoice(500_000m);
+        invoice.RoutedApprover1 = "demo.manager";
+        invoice.RoutedApprover2 = "demo.director";
+        invoice.FirstApprovedBy = "demo.manager";
+
+        AssertApprovalDeniedWithoutMutation(
+            invoice,
+            "demo.manager",
+            ApproverRole.Manager,
+            "This invoice is waiting for demo.director.");
     }
 
     [Fact]
@@ -346,6 +402,25 @@ public class ApprovalServiceTests
             () => service.Reject("INV-1", "demo.manager2", "Duplicate invoice"));
 
         Assert.Equal("This invoice is waiting for demo.manager.", exception.Message);
+        AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Reject_DeniesWhenNoApproverIsAssignedWithoutMutation()
+    {
+        var invoice = PendingInvoice(30_000m);
+        invoice.ProjectId = "PRJ-ERP";
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-ENTERPRISE", null)
+            .WithoutAdmins();
+        var repository = PendingRepository(invoice, directory);
+        var service = ServiceFor(repository, directory);
+
+        var exception = Assert.Throws<ApprovalDeniedException>(
+            () => service.Reject("INV-1", "demo.requester2", "Duplicate invoice"));
+
+        Assert.Equal("No approver is currently assigned to this invoice.", exception.Message);
         AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
         Assert.Equal(0, repository.UpdateCount);
     }
@@ -616,14 +691,15 @@ public class ApprovalServiceTests
     private static Invoice InvoiceWith(
         string id,
         InvoiceStatus status,
-        decimal amount = 100m) =>
+        decimal amount = 100m,
+        string projectId = PortalProjectId) =>
         new()
         {
             Id = id,
             CustomerName = "Test School",
             Amount = amount,
             Status = status,
-            ProjectId = PortalProjectId,
+            ProjectId = projectId,
             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
             DecidedBy = "previous.approver",
             DecidedAt = new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc),

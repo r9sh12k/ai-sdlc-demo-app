@@ -5,6 +5,24 @@ namespace InvoiceApp.Tests;
 
 public class ApprovalRoutingTests
 {
+    [Fact]
+    public void NextApprover_RejectsNullInvoice()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => ApprovalRouting.NextApprover(null!, FakeOrgDirectory.CreateDemo()));
+
+        Assert.Equal("invoice", exception.ParamName);
+    }
+
+    [Fact]
+    public void NextApprover_RejectsNullDirectory()
+    {
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => ApprovalRouting.NextApprover(PendingInvoice(30_000m), null!));
+
+        Assert.Equal("orgDirectory", exception.ParamName);
+    }
+
     [Theory]
     [InlineData(50_000.00, "demo.manager")]
     [InlineData(50_000.01, "demo.director")]
@@ -53,6 +71,96 @@ public class ApprovalRoutingTests
         var nextApprover = ApprovalRouting.NextApprover(invoice, FakeOrgDirectory.CreateDemo());
 
         Assert.Equal("demo.manager2", nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesExplicitSubmitterInsteadOfInvoiceSubmitter()
+    {
+        var invoice = PendingInvoice(30_000m, submittedBy: "demo.manager");
+
+        var nextApprover = ApprovalRouting.NextApprover(
+            invoice,
+            FakeOrgDirectory.CreateDemo(),
+            submittedBy: "demo.requester");
+
+        Assert.Equal("demo.manager", nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesExplicitPriorApproverOverInvoiceValue()
+    {
+        var invoice = PendingInvoice(600_000m);
+        invoice.RoutedApprover1 = "demo.manager";
+        invoice.RoutedApprover2 = "demo.director";
+        invoice.FirstApprovedBy = string.Empty;
+
+        var nextApprover = ApprovalRouting.NextApprover(
+            invoice,
+            FakeOrgDirectory.CreateDemo(),
+            previouslyApprovedBy: "demo.manager");
+
+        Assert.Equal("demo.director", nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_SkipsCandidateAtRequestersRank()
+    {
+        var invoice = PendingInvoice(30_000m, submittedBy: "demo.admin");
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithAdmins("demo.admin", "demo.admin2");
+
+        var nextApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Null(nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesAdminWhenProjectHasNoAccount()
+    {
+        var invoice = PendingInvoice(30_000m, "PRJ-ORPHAN");
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithProjectWithoutAccount("PRJ-ORPHAN");
+
+        var nextApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.admin", nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_ReturnsNullWhenProjectIsMissing()
+    {
+        var nextApprover = ApprovalRouting.NextApprover(
+            PendingInvoice(30_000m, "PRJ-MISSING"),
+            FakeOrgDirectory.CreateDemo());
+
+        Assert.Null(nextApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesAdminForSecondHighValueApprovalWhenHeadIsUnavailable()
+    {
+        var invoice = PendingInvoice(600_000m);
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-DIGITAL", null);
+
+        var firstApprover = ApprovalRouting.NextApprover(invoice, directory);
+        invoice.FirstApprovedBy = firstApprover;
+        var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.manager", firstApprover);
+        Assert.Equal("demo.admin", secondApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesAdminAsHighValueFirstApproverWhenOtherCandidatesAreUnavailable()
+    {
+        var invoice = PendingInvoice(600_000m, "PRJ-ERP");
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-ENTERPRISE", null);
+
+        var nextApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.admin", nextApprover);
     }
 
     [Fact]

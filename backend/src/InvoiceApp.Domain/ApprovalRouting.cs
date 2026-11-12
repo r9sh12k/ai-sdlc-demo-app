@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace InvoiceApp.Domain;
 
 public static class ApprovalRouting
@@ -103,8 +105,7 @@ public static class ApprovalRouting
     {
         foreach (var candidate in candidates)
         {
-            if (string.IsNullOrWhiteSpace(candidate) ||
-                SameUser(candidate, submittedBy) ||
+            if (IsBlankOrSameUser(candidate, submittedBy) ||
                 SameUser(candidate, excludedUsername) ||
                 Rank(candidate, project, businessUnit, admins) <= requesterRank)
             {
@@ -117,12 +118,19 @@ public static class ApprovalRouting
         return null;
     }
 
+    // Stryker disable once Logical : Blank candidates have rank zero and fail the following rank check.
+    private static bool IsBlankOrSameUser(
+        [NotNullWhen(false)] string? candidate,
+        string? username) =>
+        string.IsNullOrWhiteSpace(candidate) || SameUser(candidate, username);
+
     private static int Rank(
         string? username,
         Project project,
         BusinessUnit? businessUnit,
         IReadOnlyList<string> admins)
     {
+        // Stryker disable once Block : Blank usernames have rank zero in the final fallback too.
         if (string.IsNullOrWhiteSpace(username))
         {
             return 0;
