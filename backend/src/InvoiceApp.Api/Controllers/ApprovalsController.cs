@@ -25,7 +25,7 @@ public class ApprovalsController : ApiControllerBase
         return Handle(() => _approvals.Approve(invoiceId, session.Username, MapRole(session.Role)));
     }
 
-    [RequireRole("Manager", "Director")]
+    [RequireRole("Manager", "Director", "Admin")]
     [HttpPost("{invoiceId}/reject")]
     public ActionResult<Invoice> Reject(string invoiceId, [FromBody] RejectRequest request) =>
         Handle(() => _approvals.Reject(invoiceId, HttpContext.GetSession().Username, request.Reason));

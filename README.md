@@ -28,7 +28,7 @@ These are demo accounts for a local, in-memory app. They are not real credential
 
 Invoices move through Draft, Pending Approval, then Approved or Rejected.
 
-Managers may approve invoices up to $50,000. Directors and Admins may approve up to $500,000. Above that amount, two distinct approvers are required: a Manager, Director, or Admin first, then a different Director or Admin. Admins may approve but may not reject invoices. Role-permission denials appear in a dismissible modal and are cleared when the session ends.
+Managers may approve invoices up to $50,000. Directors and Admins may approve up to $500,000. Above that amount, two distinct approvers are required: a Manager, Director, or Admin first, then a different Director or Admin. Admins may approve and may reject pending invoices with a reason. Role-permission denials appear in a dismissible modal and are cleared when the session ends.
 
 ## Tests
 

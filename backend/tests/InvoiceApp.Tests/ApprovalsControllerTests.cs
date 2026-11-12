@@ -109,7 +109,7 @@ public class ApprovalsControllerTests
     }
 
     [Fact]
-    public void Reject_AdminIsDeniedBeforeInvoiceCanChange()
+    public void Reject_AdminCanRejectPendingInvoiceWithReason()
     {
         var invoice = new Invoice
         {
@@ -125,9 +125,44 @@ public class ApprovalsControllerTests
         controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
 
         var filterContext = ApplyActionRoleFilter("Reject", httpContext, controller);
+        Assert.Null(filterContext.Result);
+
+        var result = controller.Reject(
+            "INV-1",
+            new ApprovalsController.RejectRequest("Duplicate invoice."));
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        var rejectedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Rejected, rejectedInvoice.Status);
+        Assert.Equal("demo.admin", rejectedInvoice.DecidedBy);
+        Assert.Equal("Duplicate invoice.", rejectedInvoice.DecisionNote);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Reject_RequesterIsDeniedBeforeInvoiceCanChange()
+    {
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            CustomerName = "Test School",
+            Amount = 30_000m,
+            Status = InvoiceStatus.PendingApproval
+        };
+        var repository = new FakeInvoiceRepository(invoice);
+        var controller = new ApprovalsController(new ApprovalService(repository));
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items[HttpContextExtensions.SessionKey] =
+            new UserSession("demo.requester", "Requester");
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        var filterContext = ApplyActionRoleFilter("Reject", httpContext, controller);
 
         var response = Assert.IsType<ObjectResult>(filterContext.Result);
         Assert.Equal(StatusCodes.Status403Forbidden, response.StatusCode);
+        Assert.Equal(
+            "Your account does not have permission to perform this action.",
+            JsonSerializer.SerializeToElement(response.Value).GetProperty("error").GetString());
         AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
         Assert.Equal(0, repository.UpdateCount);
     }

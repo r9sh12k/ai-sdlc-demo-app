@@ -17,9 +17,10 @@ Follow [AGENTS.md](../../../AGENTS.md); do not duplicate its guidance.
 | Director | > 500,000.00 | May be first approver; may be second only if distinct |
 | Admin | ≤ 500,000.00 | May approve as the sole approver, using Director limits |
 | Admin | > 500,000.00 | May be first approver; may be second only if distinct |
+| Admin | Any pending invoice with a non-empty reason | May reject |
 | Any role | > 500,000.00, second approval | Require a distinct Director or Admin; prior Manager, Director, or Admin is eligible |
 
-Admins may approve but may not reject invoices.
+Admins may approve and reject pending invoices with a non-empty reason.
 
 On submission, record the signed-in username as `SubmittedBy`. Deny approval by the submitter at either approval stage, for any amount and role. Compare usernames after trimming and ignoring case, and perform this check before amount-limit checks. A denial must use `You submitted this invoice, so someone else must approve it.`, leave every invoice field unchanged, and not call `Update`. If `SubmittedBy` is absent, do not apply the self-approval rule.
 
