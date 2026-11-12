@@ -14,23 +14,56 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 
 - Controllers live in `Controllers/`, one per resource, route `api/[controller]`. Request bodies are `record` types declared inside the controller.
 - Controllers inherit `ApiControllerBase` and use `Handle(...)` so service errors map to 404, 409 and 400.
-- Every endpoint is behind sign-in. Restrict actions with `[RequireRole("...")]`: destructive actions are Admin only, approvals are Approver or Admin.
+- Keep every endpoint behind sign-in. Restrict destructive actions to Admin.
 - Business rules go in the Domain project, never in controllers.
 - Register services in `Program.cs`. Repositories are interfaces in Domain with an in-memory implementation in Api.
 - Every new rule or endpoint needs tests. Use `FakeInvoiceRepository` in tests.
 - Use clear names; no one-letter variables or `flag` parameters.
 - End-to-end tests use page objects and role-based locators (`getByRole`, `getByLabel`), never CSS or XPath selectors.
 
+## Approval limits (`feature/approval-limits`)
+
+- Let a Manager approve amounts up to and including 50,000.00.
+- Let a Director approve amounts up to and including 500,000.00.
+- Require two distinct approvers above 500,000.00: first a Manager or Director, then a Director.
+- Compare usernames after trimming and ignoring case; never count one user twice.
+- Deny Admin approval; Manager and Director replace Approver.
+- For a denied attempt, throw `ApprovalDeniedException` with an actionable reason; change no fields and do not call `Update`.
+- Test boundaries 50,000.00, 50,000.01, 500,000.00 and 500,000.01.
+- Keep approval rules in `InvoiceApp.Domain`; use no role strings or HTTP types there.
+- Map the session to Domain types in controllers, then call `Handle(...)`.
+- Map `ApprovalDeniedException` in `ApiControllerBase` to `403 { "error": reason }`.
+- Validate first and change state last.
+
 ## Commands
 
 - Run the app: `dotnet run --project backend/src/InvoiceApp.Api` then open http://localhost:5000
 - Run the tests: `dotnet test backend/InvoiceApp.sln`
-- Run end-to-end tests: `cd e2e && npm install && npx playwright install chromium && npm test`
+- From `backend/tests/InvoiceApp.Tests`, run mutation tests: `dotnet stryker --project InvoiceApp.Domain.csproj` (Stryker 4.13.0).
+- From `e2e`, run end-to-end tests: `npx playwright test`.
 
 ## Demo accounts (not real credentials)
 
-- `demo.approver` / `ChangeMe123!` (role Approver)
+- `demo.manager` / `ChangeMe123!` (role Manager)
+- `demo.director` / `ChangeMe123!` (role Director)
+- `demo.director2` / `ChangeMe123!` (role Director)
 - `demo.admin` / `ChangeMe123!` (role Admin)
+
+## Agent workflow
+
+- Read the Implementer, Test Critic and PR Reviewer skills by path in `.github/skills`.
+- Write the spec first with OpenSpec; handle one task group per prompt.
+- Write tests first; consider a rule done only when a test fails if the rule is removed.
+- Format commits as `<type>(<scope>): <what>` and include a `Why:` line.
+- Let hooks write `docs/ai-log`; never edit it.
+
+## Review expectations
+
+- Report findings in a table: `| ID | Severity | File:line | Finding | Suggested fix |`.
+- Number findings from F-01 upward; use High, Medium or Low severity.
+- Check negative rules assert the invoice is unchanged and all four boundaries are tested.
+- Check nothing changes state before validation and no rule sits in a controller or `app.js`.
+- Check error text is fit for a user.
 
 ## Never
 
