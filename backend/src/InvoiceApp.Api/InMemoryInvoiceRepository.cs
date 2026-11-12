@@ -19,18 +19,22 @@ public class InMemoryInvoiceRepository : IInvoiceRepository
 
     public IReadOnlyList<Invoice> GetAll()
     {
-        lock (_lock) return _invoices.ToList();
+        lock (_lock) return _invoices.Select(Copy).ToList();
     }
 
     public Invoice? GetById(string id)
     {
-        lock (_lock) return _invoices.FirstOrDefault(i => i.Id == id);
+        lock (_lock)
+        {
+            var invoice = _invoices.FirstOrDefault(i => i.Id == id);
+            return invoice is null ? null : Copy(invoice);
+        }
     }
 
     public IReadOnlyList<Invoice> GetByIds(IEnumerable<string> ids)
     {
         var wanted = ids.ToHashSet();
-        lock (_lock) return _invoices.Where(i => wanted.Contains(i.Id)).ToList();
+        lock (_lock) return _invoices.Where(i => wanted.Contains(i.Id)).Select(Copy).ToList();
     }
 
     public Invoice Add(Invoice invoice)
@@ -42,8 +46,8 @@ public class InMemoryInvoiceRepository : IInvoiceRepository
                 invoice.Id = $"INV-{_nextNumber++}";
             }
 
-            _invoices.Add(invoice);
-            return invoice;
+            _invoices.Add(Copy(invoice));
+            return Copy(invoice);
         }
     }
 
@@ -52,7 +56,7 @@ public class InMemoryInvoiceRepository : IInvoiceRepository
         lock (_lock)
         {
             var index = _invoices.FindIndex(i => i.Id == invoice.Id);
-            if (index >= 0) _invoices[index] = invoice;
+            if (index >= 0) _invoices[index] = Copy(invoice);
         }
     }
 
@@ -60,4 +64,16 @@ public class InMemoryInvoiceRepository : IInvoiceRepository
     {
         lock (_lock) return _invoices.RemoveAll(i => i.Id == id) > 0;
     }
+
+    private static Invoice Copy(Invoice invoice) => new()
+    {
+        Id = invoice.Id,
+        CustomerName = invoice.CustomerName,
+        Amount = invoice.Amount,
+        Status = invoice.Status,
+        CreatedAt = invoice.CreatedAt,
+        DecidedBy = invoice.DecidedBy,
+        DecidedAt = invoice.DecidedAt,
+        DecisionNote = invoice.DecisionNote
+    };
 }

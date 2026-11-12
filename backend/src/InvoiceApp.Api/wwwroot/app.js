@@ -49,8 +49,19 @@
       const actions = el('td');
       if (invoice.status === 'Draft') {
         const submit = el('button', { type: 'button', class: 'secondary', 'aria-label': `Submit invoice ${invoice.id} for approval` }, 'Submit for approval');
-        submit.addEventListener('click', async () => { await api(`/invoices/${invoice.id}/submit`, { method: 'POST' }); refresh(); });
-        actions.append(submit);
+        const submitError = el('p', { role: 'alert', hidden: '' });
+        submit.addEventListener('click', async () => {
+          submitError.hidden = true;
+          try {
+            await api(`/invoices/${invoice.id}/submit`, { method: 'POST' });
+          } catch (error) {
+            submitError.textContent = error.message;
+            submitError.hidden = false;
+            return;
+          }
+          refresh();
+        });
+        actions.append(submit, submitError);
       }
       return el('tr', {},
         el('td', {}, invoice.id),

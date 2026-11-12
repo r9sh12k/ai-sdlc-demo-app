@@ -15,10 +15,13 @@ public class ApprovalServiceTests
     public void Submit_MovesDraftToPendingApproval()
     {
         var invoice = InvoiceWith("INV-1", InvoiceStatus.Draft);
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = new ApprovalService(repository);
 
-        var result = ServiceFor(invoice).Submit("INV-1");
+        service.Submit("INV-1");
 
-        Assert.Equal(InvoiceStatus.PendingApproval, result.Status);
+        Assert.Equal(InvoiceStatus.PendingApproval, repository.GetById("INV-1")!.Status);
+        Assert.Equal(1, repository.UpdateCount);
     }
 
     [Fact]
@@ -32,13 +35,16 @@ public class ApprovalServiceTests
     [Fact]
     public void Approve_SetsStatusApproverAndTimestamp()
     {
-        var service = ServiceFor(InvoiceWith("INV-1", InvoiceStatus.PendingApproval));
+        var repository = new FakeInvoiceRepository(InvoiceWith("INV-1", InvoiceStatus.PendingApproval));
+        var service = new ApprovalService(repository);
 
-        var result = service.Approve("INV-1", "demo.approver");
+        service.Approve("INV-1", "demo.approver");
 
-        Assert.Equal(InvoiceStatus.Approved, result.Status);
-        Assert.Equal("demo.approver", result.DecidedBy);
-        Assert.NotNull(result.DecidedAt);
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.approver", storedInvoice.DecidedBy);
+        Assert.NotNull(storedInvoice.DecidedAt);
+        Assert.Equal(1, repository.UpdateCount);
     }
 
     [Fact]
@@ -60,12 +66,17 @@ public class ApprovalServiceTests
     [Fact]
     public void Reject_RecordsReasonAndApprover()
     {
-        var service = ServiceFor(InvoiceWith("INV-1", InvoiceStatus.PendingApproval));
+        var repository = new FakeInvoiceRepository(InvoiceWith("INV-1", InvoiceStatus.PendingApproval));
+        var service = new ApprovalService(repository);
 
-        var result = service.Reject("INV-1", "demo.approver", "Duplicate invoice");
+        service.Reject("INV-1", "demo.approver", "Duplicate invoice");
 
-        Assert.Equal(InvoiceStatus.Rejected, result.Status);
-        Assert.Equal("Duplicate invoice", result.DecisionNote);
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Rejected, storedInvoice.Status);
+        Assert.Equal("demo.approver", storedInvoice.DecidedBy);
+        Assert.NotNull(storedInvoice.DecidedAt);
+        Assert.Equal("Duplicate invoice", storedInvoice.DecisionNote);
+        Assert.Equal(1, repository.UpdateCount);
     }
 
     [Fact]
@@ -73,6 +84,9 @@ public class ApprovalServiceTests
     {
         var service = ServiceFor(InvoiceWith("INV-1", InvoiceStatus.PendingApproval));
 
-        Assert.Throws<ArgumentException>(() => service.Reject("INV-1", "demo.approver", "  "));
+        var exception = Assert.Throws<ArgumentException>(
+            () => service.Reject("INV-1", "demo.approver", "  "));
+
+        Assert.Equal("A reason is required to reject an invoice.", exception.Message);
     }
 }

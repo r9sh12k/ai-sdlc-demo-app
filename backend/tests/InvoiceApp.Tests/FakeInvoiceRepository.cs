@@ -6,12 +6,47 @@ internal class FakeInvoiceRepository : IInvoiceRepository
 {
     private readonly List<Invoice> _invoices = new();
 
-    public FakeInvoiceRepository(params Invoice[] seed) => _invoices.AddRange(seed);
+    public int UpdateCount { get; private set; }
 
-    public IReadOnlyList<Invoice> GetAll() => _invoices.ToList();
-    public Invoice? GetById(string id) => _invoices.FirstOrDefault(i => i.Id == id);
-    public IReadOnlyList<Invoice> GetByIds(IEnumerable<string> ids) => _invoices.Where(i => ids.Contains(i.Id)).ToList();
-    public Invoice Add(Invoice invoice) { _invoices.Add(invoice); return invoice; }
-    public void Update(Invoice invoice) { }
+    public FakeInvoiceRepository(params Invoice[] seed) => _invoices.AddRange(seed.Select(Copy));
+
+    public IReadOnlyList<Invoice> GetAll() => _invoices.Select(Copy).ToList();
+    public Invoice? GetById(string id)
+    {
+        var invoice = _invoices.FirstOrDefault(i => i.Id == id);
+        return invoice is null ? null : Copy(invoice);
+    }
+
+    public IReadOnlyList<Invoice> GetByIds(IEnumerable<string> ids)
+    {
+        var wanted = ids.ToHashSet();
+        return _invoices.Where(i => wanted.Contains(i.Id)).Select(Copy).ToList();
+    }
+
+    public Invoice Add(Invoice invoice)
+    {
+        _invoices.Add(Copy(invoice));
+        return Copy(invoice);
+    }
+
+    public void Update(Invoice invoice)
+    {
+        UpdateCount++;
+        var index = _invoices.FindIndex(i => i.Id == invoice.Id);
+        if (index >= 0) _invoices[index] = Copy(invoice);
+    }
+
     public bool Remove(string id) => _invoices.RemoveAll(i => i.Id == id) > 0;
+
+    private static Invoice Copy(Invoice invoice) => new()
+    {
+        Id = invoice.Id,
+        CustomerName = invoice.CustomerName,
+        Amount = invoice.Amount,
+        Status = invoice.Status,
+        CreatedAt = invoice.CreatedAt,
+        DecidedBy = invoice.DecidedBy,
+        DecidedAt = invoice.DecidedAt,
+        DecisionNote = invoice.DecisionNote
+    };
 }

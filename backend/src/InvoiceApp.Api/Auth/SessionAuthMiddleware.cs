@@ -27,6 +27,10 @@ public class SessionAuthMiddleware
             if (session is null)
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    error = "Your session is missing or expired. Sign in and try again."
+                });
                 return;
             }
 
