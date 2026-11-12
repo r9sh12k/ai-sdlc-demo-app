@@ -25,9 +25,3 @@ The system SHALL allow Admins to approve invoices under the same amount limits, 
 - **WHEN** an Admin attempts to approve an invoice they submitted
 - **THEN** the attempt is denied with an actionable reason and the invoice remains unchanged
 
-### Requirement: Admin approval authority does not grant rejection authority
-The system SHALL continue to deny Admins permission to reject invoices.
-
-#### Scenario: Admin attempts to reject an invoice
-- **WHEN** an Admin attempts to reject a pending invoice
-- **THEN** the attempt is denied and the invoice remains unchanged
