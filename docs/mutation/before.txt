@@ -1,0 +1,94 @@
+
+   _____ _              _
+_   _ ______ _______ ┬á
+  / ____| |            | |
+| \ | |  ____|__   __|┬á
+ | (___ | |_ _ __ _   _| | _____ _ 
+__  |  \| | |__     | |   ┬á
+  \___ \| __| '__| | | | |/ / _ \ 
+'__| | . ` |  __|    | |   ┬á
+  ____) | |_| |  | |_| |   <  __/ |
+| |\  | |____   | |   ┬á
+ |_____/ \__|_|   \__, |_|\_\___|_| 
+(_)|_| \_|______|  |_|   ┬á
+                   __/ |
+                                                      |___/
+                                    
+
+Version: 4.13.0
+
+[19:17:02 INF] Analysis starting.
+[19:17:02 INF] Analyzing 1 test project(s).
+A new version of Stryker.NET (5.1.0)
+is available. Please consider 
+upgrading using `dotnet tool update 
+-g dotnet-stryker`
+
+[19:17:05 INF] Found project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj to mutate.
+[19:17:05 INF] Analysis complete.
+[19:17:05 INF] Building test project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests\InvoiceApp.Tests.csproj (1/1)
+[19:17:05 INF] Building project InvoiceApp.Tests.csproj using dotnet build InvoiceApp.Tests.csproj -c Debug --property:Platform=AnyCPU (directory C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests.)
+[19:17:13 INF] Number of tests found: 23 for project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj. Initial test run started.
+[19:17:16 INF] 87 mutants created
+[19:17:16 INF] Capture mutant coverage using 'CoverageBasedTest' mode.
+Hint: by passing "--open-report or 
+-o" the report will open 
+automatically and update the report 
+in real-time.
+[19:17:17 INF] 13    mutants got status Ignored.      Reason: Removed by block already covered filter
+[19:17:17 INF] 24    mutants got status Ignored.      Reason: Removed by mutate filter
+[19:17:17 INF] 37    total mutants are skipped for the above mentioned reasons
+[19:17:17 INF] 50    total mutants will be tested
+
+
+All mutants have been tested, and 
+your mutation score has been 
+calculated
+Γò¡ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓöÇΓö¼ΓöÇΓöÇΓò«
+Γöé File    Γöé  Γöé # Γöé #  Γöé  #  Γöé # Γöé  Γöé
+Γöé         Γöé  Γöé ΓÇª Γöé tΓÇª Γöé suΓÇª Γöé ΓÇª Γöé  Γöé
+Γöé         Γöé  Γöé   Γöé    Γöé     Γöé ΓÇª Γöé  Γöé
+Γö£ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöñ
+Γöé C:\User Γöé  Γöé 4 Γöé  1 Γöé  42 Γöé 0 Γöé  Γöé
+Γöé s\Risha Γöé  Γöé 4 Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé b\Deskt Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé op\fina Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé l\ai-sd Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé lc-demo Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé -app\ba Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé ckend\s Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé rc      Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Approva Γöé  Γöé 0 Γöé  0 Γöé   0 Γöé 0 Γöé  Γöé
+Γöé lDenied Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Excepti Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé on.cs   Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Approva Γöé  Γöé 4 Γöé  1 Γöé  18 Γöé 0 Γöé  Γöé
+Γöé lServic Γöé  Γöé 4 Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé e.cs    Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Approve Γöé  Γöé 0 Γöé  0 Γöé   0 Γöé 0 Γöé  Γöé
+Γöé rRole.c Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé s       Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Discoun Γöé  Γöé 0 Γöé  0 Γöé  22 Γöé 0 Γöé  Γöé
+Γöé tCalcul Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé ator.cs Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé IInvoic Γöé  Γöé 0 Γöé  0 Γöé   0 Γöé 0 Γöé  Γöé
+Γöé eReposi Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé tory.cs Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Invoice Γöé  Γöé 0 Γöé  0 Γöé   2 Γöé 0 Γöé  Γöé
+Γöé .cs     Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé Invoice Γöé  Γöé 0 Γöé  0 Γöé   0 Γöé 0 Γöé  Γöé
+Γöé Status. Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γöé cs      Γöé  Γöé   Γöé    Γöé     Γöé   Γöé  Γöé
+Γò░ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓöÇΓö┤ΓöÇΓöÇΓò»
+
+Your html report has been generated 
+at:
+file://C:/Users/Rishab/Desktop/final
+/ai-sdlc-demo-app/backend/tests/Invo
+iceApp.Tests/StrykerOutput/2026-11-1
+2.19-17-01/reports/mutation-report.h
+tml
+You can open it in your browser of 
+choice.
+[19:17:56 INF] Time Elapsed 00:00:54.7950088
+[19:17:56 INF] The final mutation score is 90.00 %
