@@ -11,4 +11,4 @@
 
 ## 3. UI explanation and end-to-end coverage
 
-- [ ] 3.1 Show the next-approver requirement for high-value invoices and add one Playwright test using the page object and role-based locators; verify with `npx playwright test`.
+- [x] 3.1 Show the next-approver requirement for high-value invoices and add one Playwright test using the page object and role-based locators; verify with `npx playwright test`.

@@ -85,6 +85,9 @@
 
       return el('li', {},
         el('span', {}, `${invoice.id} · ${invoice.customerName} · ${money.format(invoice.amount)}`),
+        ...(invoice.firstApprovedBy
+          ? [el('span', {}, `Awaiting second approval (first: ${invoice.firstApprovedBy})`)]
+          : []),
         el('span', {}, approve),
         el('div', { class: 'reject-row' }, reason, reject));
     }));
