@@ -48,4 +48,20 @@ public class FakeInvoiceRepositoryTests
         Assert.Equal(1, repository.UpdateCount);
         Assert.Equal("Updated", repository.GetById("INV-1")!.CustomerName);
     }
+
+    [Fact]
+    public void Copies_PreserveSubmittedBy()
+    {
+        var invoice = new Invoice { Id = "INV-1" };
+        invoice.SubmittedBy = "demo.requester";
+        var repository = new FakeInvoiceRepository(invoice);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal("demo.requester", storedInvoice.SubmittedBy);
+
+        storedInvoice.SubmittedBy = "demo.manager";
+        repository.Update(storedInvoice);
+
+        Assert.Equal("demo.manager", repository.GetById("INV-1")!.SubmittedBy);
+    }
 }

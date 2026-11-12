@@ -45,4 +45,26 @@ public class InMemoryInvoiceRepositoryTests
 
         Assert.Equal("Updated", repository.GetById("INV-1001")!.CustomerName);
     }
+
+    [Fact]
+    public void Copies_PreserveSubmittedBy()
+    {
+        var repository = new InMemoryInvoiceRepository();
+        var invoice = new Invoice
+        {
+            Id = "INV-SUBMITTED",
+            CustomerName = "Submitted School",
+            SubmittedBy = "demo.requester"
+        };
+
+        repository.Add(invoice);
+        var retrieved = repository.GetById("INV-SUBMITTED")!;
+
+        Assert.Equal("demo.requester", retrieved.SubmittedBy);
+        retrieved.SubmittedBy = "demo.manager";
+        repository.Update(retrieved);
+
+        Assert.Equal("demo.manager", repository.GetAll()
+            .Single(savedInvoice => savedInvoice.Id == "INV-SUBMITTED").SubmittedBy);
+    }
 }

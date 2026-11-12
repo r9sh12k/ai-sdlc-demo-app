@@ -27,11 +27,11 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 - On submit, record the signed-in username as `SubmittedBy`.
 - Let a Manager approve amounts up to and including 50,000.00.
 - Let a Director approve amounts up to and including 500,000.00.
-- Require two distinct approvers above 500,000.00: first a Manager or Director, then a Director.
+- Require two distinct approvers above 500,000.00: first a Manager, Director, or Admin, then a distinct Director or Admin.
 - Compare usernames after trimming and ignoring case; never count one user twice.
 - Deny approval by the submitter at either approval stage, for any amount and role, before applying amount limits. Invoices without `SubmittedBy` are unaffected.
 - Use the exact self-approval denial reason: `You submitted this invoice, so someone else must approve it.`
-- Deny Admin approval; Manager and Director replace Approver.
+- Let Admins approve under the Director limits; Admins cannot reject.
 - For a denied approval attempt, throw `ApprovalDeniedException` with an actionable reason; change no fields and do not call `Update`.
 - Test boundaries 50,000.00, 50,000.01, 500,000.00 and 500,000.01.
 - Keep approval rules in `InvoiceApp.Domain`; use no role strings or HTTP types there.

@@ -15,8 +15,8 @@
 
 ## 4. Requester access and self-approval prevention in Domain and API
 
-- [ ] 4.1 Add the Requester role's create, submit, and view permissions and deny its approve and reject actions; record the signed-in username as `SubmittedBy` on submission; add focused API tests for permitted and denied actions.
-- [ ] 4.2 Deny approval by the submitter at either approval stage, regardless of role or amount, using trimmed, case-insensitive username matching before amount-limit checks; preserve invoices without `SubmittedBy`; assert the exact denial reason, unchanged invoice fields, and no repository update on denial, with Domain and API tests.
+- [x] 4.1 Add the Requester role's create, submit, and view permissions and deny its approve and reject actions; record the signed-in username as `SubmittedBy` on submission; add focused API tests for permitted and denied actions.
+- [x] 4.2 Deny approval by the submitter at either approval stage, regardless of role or amount, using trimmed, case-insensitive username matching before amount-limit checks; preserve invoices without `SubmittedBy`; assert the exact denial reason, unchanged invoice fields, and no repository update on denial, with Domain and API tests.
 
 ## 5. Approver attribution in the UI
 

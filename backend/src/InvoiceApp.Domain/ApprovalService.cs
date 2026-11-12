@@ -18,7 +18,7 @@ public class ApprovalService
         _repository = repository;
     }
 
-    public Invoice Submit(string invoiceId)
+    public Invoice Submit(string invoiceId, string submittedBy)
     {
         var invoice = Find(invoiceId);
 
@@ -28,6 +28,7 @@ public class ApprovalService
                 $"Invoice {invoiceId} is {invoice.Status}; only drafts can be submitted.");
         }
 
+        invoice.SubmittedBy = submittedBy;
         invoice.Status = InvoiceStatus.PendingApproval;
         _repository.Update(invoice);
         return invoice;
@@ -38,10 +39,22 @@ public class ApprovalService
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
 
-        if (role == ApproverRole.Admin ||
-            (role != ApproverRole.Manager && role != ApproverRole.Director))
+        if (!string.IsNullOrWhiteSpace(invoice.SubmittedBy) &&
+            string.Equals(
+                invoice.SubmittedBy.Trim(),
+                approver.Trim(),
+                StringComparison.OrdinalIgnoreCase))
         {
-            throw new ApprovalDeniedException("Only Managers and Directors may approve invoices.");
+            throw new ApprovalDeniedException(
+                "You submitted this invoice, so someone else must approve it.");
+        }
+
+        if (role != ApproverRole.Manager &&
+            role != ApproverRole.Director &&
+            role != ApproverRole.Admin)
+        {
+            throw new ApprovalDeniedException(
+                "Only Managers, Directors, and Admins may approve invoices.");
         }
 
         if (invoice.Amount > DirectorApprovalLimit)
@@ -53,9 +66,10 @@ public class ApprovalService
                 return invoice;
             }
 
-            if (role != ApproverRole.Director)
+            if (role != ApproverRole.Director && role != ApproverRole.Admin)
             {
-                throw new ApprovalDeniedException("A Director must provide the second approval.");
+                throw new ApprovalDeniedException(
+                    "A Director or Admin must provide the second approval.");
             }
 
             if (string.Equals(
@@ -64,7 +78,7 @@ public class ApprovalService
                 StringComparison.OrdinalIgnoreCase))
             {
                 throw new ApprovalDeniedException(
-                    "A different Director must provide the second approval.");
+                    "A different Director or Admin must provide the second approval.");
             }
         }
 

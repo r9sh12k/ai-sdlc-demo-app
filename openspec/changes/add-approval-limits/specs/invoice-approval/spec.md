@@ -7,7 +7,7 @@ Defines amount- and role-based invoice approval, including distinct two-person a
 ## ADDED Requirements
 
 ### Requirement: Approval authority is limited by role and amount
-The system SHALL allow Managers to approve invoices up to 50,000.00 and Directors to approve invoices up to 500,000.00, inclusive; only a Director may complete approval above 500,000.00.
+The system SHALL allow Managers to approve invoices up to 50,000.00 and Directors and Admins to approve invoices up to 500,000.00, inclusive. For invoices above 500,000.00, it SHALL require a Manager, Director, or Admin as first approver and a distinct Director or Admin as second approver.
 
 #### Scenario: Manager approves 50,000.00
 - **WHEN** a Manager approves an invoice for 50,000.00
@@ -21,13 +21,25 @@ The system SHALL allow Managers to approve invoices up to 50,000.00 and Director
 - **WHEN** a Director approves an invoice for 500,000.00
 - **THEN** the invoice is approved
 
+#### Scenario: Admin approves 500,000.00
+- **WHEN** an Admin approves an invoice for 500,000.00
+- **THEN** the invoice is approved
+
 #### Scenario: 500,000.01 requires two approvals
-- **WHEN** a Manager or Director approves an invoice for 500,000.01 as the first approver
+- **WHEN** a Manager, Director, or Admin approves an invoice for 500,000.01 as the first approver
 - **THEN** the invoice remains PendingApproval and records that approver as the first approver
 
 #### Scenario: Manager is the second approver
 - **WHEN** a Manager attempts to complete approval of an invoice for 500,000.01 after its first approval
 - **THEN** the attempt is denied with a clear reason and the invoice remains unchanged
+
+#### Scenario: Admin completes a high-value approval as a distinct second approver
+- **WHEN** an Admin different from the first approver approves an invoice for 500,000.01 after a Manager, Director, or Admin provided the first approval
+- **THEN** the invoice is approved and retains the first approver attribution
+
+#### Scenario: Director completes a high-value approval after Admin first approval
+- **WHEN** a Director approves an invoice for 500,000.01 after a different Admin provided the first approval
+- **THEN** the invoice is approved and retains the Admin as first approver
 
 ### Requirement: Requesters can manage their invoices but cannot decide them
 The system SHALL allow a Requester to create, submit, and view invoices, and SHALL deny Requesters permission to approve or reject invoices.
@@ -75,7 +87,7 @@ A self-approval denial SHALL return `You submitted this invoice, so someone else
 - **THEN** the self-approval rule does not deny the attempt
 
 ### Requirement: High-value approvals require two distinct approvers
-For an invoice above 500,000.00, the system SHALL require a Manager or Director first and a distinct Director second. Usernames SHALL be compared after trimming and ignoring case.
+For an invoice above 500,000.00, the system SHALL require a Manager, Director, or Admin first and a distinct Director or Admin second. Usernames SHALL be compared after trimming and ignoring case.
 The system SHALL retain `FirstApprovedBy` when the second approval completes.
 
 #### Scenario: The same user cannot approve twice with different casing
@@ -83,7 +95,7 @@ The system SHALL retain `FirstApprovedBy` when the second approval completes.
 - **THEN** the attempt is denied and the invoice remains unchanged
 
 #### Scenario: Second approval retains the first approver
-- **WHEN** a distinct Director completes a high-value invoice's second approval
+- **WHEN** a distinct Director or Admin completes a high-value invoice's second approval
 - **THEN** the invoice remains approved and retains `FirstApprovedBy` alongside the second approver
 
 ### Requirement: Invoice list attributes submissions and approvals
@@ -99,10 +111,6 @@ The invoice list SHALL show `Submitted by <name>` for an invoice with a submitte
 
 ### Requirement: Approval denial preserves the invoice and explains the reason
 When an approval attempt is denied, the system SHALL provide an actionable reason and leave every invoice field unchanged.
-
-#### Scenario: Admin attempts approval
-- **WHEN** an Admin attempts to approve an invoice
-- **THEN** the attempt is denied with a clear reason and the invoice remains unchanged
 
 #### Scenario: API reports a denied approval
 - **WHEN** an approval attempt is denied through the API

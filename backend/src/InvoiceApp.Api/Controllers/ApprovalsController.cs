@@ -6,7 +6,6 @@ namespace InvoiceApp.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[RequireRole("Manager", "Director", "Admin")]
 public class ApprovalsController : ApiControllerBase
 {
     private readonly ApprovalService _approvals;
@@ -18,6 +17,7 @@ public class ApprovalsController : ApiControllerBase
 
     public record RejectRequest(string Reason);
 
+    [RequireRole("Manager", "Director", "Admin")]
     [HttpPost("{invoiceId}/approve")]
     public ActionResult<Invoice> Approve(string invoiceId)
     {
@@ -25,6 +25,7 @@ public class ApprovalsController : ApiControllerBase
         return Handle(() => _approvals.Approve(invoiceId, session.Username, MapRole(session.Role)));
     }
 
+    [RequireRole("Manager", "Director")]
     [HttpPost("{invoiceId}/reject")]
     public ActionResult<Invoice> Reject(string invoiceId, [FromBody] RejectRequest request) =>
         Handle(() => _approvals.Reject(invoiceId, HttpContext.GetSession().Username, request.Reason));
@@ -34,6 +35,7 @@ public class ApprovalsController : ApiControllerBase
         "Manager" => ApproverRole.Manager,
         "Director" => ApproverRole.Director,
         "Admin" => ApproverRole.Admin,
-        _ => throw new ApprovalDeniedException("Only Managers and Directors may approve invoices.")
+        _ => throw new ApprovalDeniedException(
+            "Only Managers, Directors, and Admins may approve invoices.")
     };
 }

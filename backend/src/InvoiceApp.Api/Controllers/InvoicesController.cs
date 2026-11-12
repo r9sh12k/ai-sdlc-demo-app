@@ -67,7 +67,8 @@ public class InvoicesController : ApiControllerBase
     }
 
     [HttpPost("{id}/submit")]
-    public ActionResult<Invoice> Submit(string id) => Handle(() => _approvals.Submit(id));
+    public ActionResult<Invoice> Submit(string id) =>
+        Handle(() => _approvals.Submit(id, HttpContext.GetSession().Username));
 
     [HttpDelete("{id}")]
     [RequireRole("Admin")]

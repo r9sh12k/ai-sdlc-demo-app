@@ -16,6 +16,7 @@ Open http://localhost:5000 and sign in:
 | `demo.director` | `ChangeMe123!` | Director |
 | `demo.director2` | `ChangeMe123!` | Director |
 | `demo.admin` | `ChangeMe123!` | Admin |
+| `demo.requester` | `ChangeMe123!` | Requester |
 
 These are demo accounts for a local, in-memory app. They are not real credentials.
 
@@ -26,6 +27,8 @@ These are demo accounts for a local, in-memory app. They are not real credential
 3. An approver approves it, or rejects it with a reason.
 
 Invoices move through Draft, Pending Approval, then Approved or Rejected.
+
+Managers may approve invoices up to $50,000. Directors and Admins may approve up to $500,000. Above that amount, two distinct approvers are required: a Manager, Director, or Admin first, then a different Director or Admin. Admins may approve but may not reject invoices. Role-permission denials appear in a dismissible modal and are cleared when the session ends.
 
 ## Tests
 

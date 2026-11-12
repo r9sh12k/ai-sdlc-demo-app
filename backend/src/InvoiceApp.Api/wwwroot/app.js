@@ -1,5 +1,6 @@
 (() => {
   const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const permissionDeniedMessage = 'Your account does not have permission to perform this action.';
   const $ = (id) => document.getElementById(id);
   let session = JSON.parse(sessionStorage.getItem('session') || 'null');
 
@@ -25,6 +26,20 @@
 
   function show(id, visible) { $(id).hidden = !visible; }
   function showError(id, message) { const p = $(id); p.textContent = message || ''; p.hidden = !message; }
+  function clearPermissionDialog() {
+    const dialog = $('permission-dialog');
+    if (dialog.open) dialog.close();
+    $('permission-message').textContent = '';
+  }
+  function showPermissionDialog(message) {
+    $('permission-message').textContent = message;
+    const dialog = $('permission-dialog');
+    if (!dialog.open) dialog.showModal();
+  }
+
+  $('permission-dialog').addEventListener('close', () => {
+    $('permission-message').textContent = '';
+  });
 
   function render() {
     const signedIn = !!session;
@@ -99,11 +114,16 @@
       await api(path, { method: 'POST', body: JSON.stringify(payload) });
       await refresh();
     } catch (error) {
-      showError('decision-error', error.message);
+      if (error.message === permissionDeniedMessage) {
+        showPermissionDialog(error.message);
+      } else {
+        showError('decision-error', error.message);
+      }
     }
   }
 
   function signOut() {
+    clearPermissionDialog();
     if (session) api('/auth/logout', { method: 'POST' }).catch(() => {});
     session = null;
     sessionStorage.removeItem('session');
@@ -118,6 +138,7 @@
         method: 'POST',
         body: JSON.stringify({ username: $('username').value, password: $('password').value })
       });
+      clearPermissionDialog();
       session = { token: result.token, username: result.username, role: result.role };
       sessionStorage.setItem('session', JSON.stringify(session));
       $('password').value = '';

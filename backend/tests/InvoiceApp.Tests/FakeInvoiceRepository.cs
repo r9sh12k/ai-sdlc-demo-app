@@ -45,6 +45,7 @@ internal class FakeInvoiceRepository : IInvoiceRepository
         Amount = invoice.Amount,
         Status = invoice.Status,
         CreatedAt = invoice.CreatedAt,
+        SubmittedBy = invoice.SubmittedBy,
         FirstApprovedBy = invoice.FirstApprovedBy,
         DecidedBy = invoice.DecidedBy,
         DecidedAt = invoice.DecidedAt,

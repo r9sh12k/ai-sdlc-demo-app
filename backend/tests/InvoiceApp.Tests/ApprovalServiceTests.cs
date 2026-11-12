@@ -28,9 +28,11 @@ public class ApprovalServiceTests
         var repository = new FakeInvoiceRepository(invoice);
         var service = new ApprovalService(repository);
 
-        service.Submit("INV-1");
+        service.Submit("INV-1", "demo.manager");
 
-        Assert.Equal(InvoiceStatus.PendingApproval, repository.GetById("INV-1")!.Status);
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.PendingApproval, storedInvoice.Status);
+        Assert.Equal("demo.manager", storedInvoice.SubmittedBy);
         Assert.Equal(1, repository.UpdateCount);
     }
 
@@ -39,7 +41,8 @@ public class ApprovalServiceTests
     {
         var service = ServiceFor(InvoiceWith("INV-1", InvoiceStatus.Approved));
 
-        var exception = Assert.Throws<InvalidOperationException>(() => service.Submit("INV-1"));
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => service.Submit("INV-1", "demo.manager"));
 
         Assert.Equal("Invoice INV-1 is Approved; only drafts can be submitted.", exception.Message);
     }
@@ -144,7 +147,7 @@ public class ApprovalServiceTests
             firstApprover: "demo.director",
             secondApprover: "demo.director",
             role: ApproverRole.Director,
-            expectedReason: "A different Director must provide the second approval.");
+            expectedReason: "A different Director or Admin must provide the second approval.");
     }
 
     [Fact]
@@ -154,7 +157,7 @@ public class ApprovalServiceTests
             firstApprover: "demo.director",
             secondApprover: " Demo.Director ",
             role: ApproverRole.Director,
-            expectedReason: "A different Director must provide the second approval.");
+            expectedReason: "A different Director or Admin must provide the second approval.");
     }
 
     [Fact]
@@ -164,17 +167,164 @@ public class ApprovalServiceTests
             firstApprover: "demo.director",
             secondApprover: "demo.manager",
             role: ApproverRole.Manager,
-            expectedReason: "A Director must provide the second approval.");
+            expectedReason: "A Director or Admin must provide the second approval.");
     }
 
     [Fact]
-    public void Approve_AdminCannotApprove()
+    public void Approve_AdminCanApproveAtDirectorLimit()
     {
-        AssertApprovalDeniedWithoutMutation(
-            amount: 1_000m,
-            role: ApproverRole.Admin,
-            username: "demo.admin",
-            expectedReason: "Only Managers and Directors may approve invoices.");
+        var repository = new FakeInvoiceRepository(
+            InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 500_000.00m));
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.admin", ApproverRole.Admin);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.admin", storedInvoice.DecidedBy);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_AdminRecordsFirstApprovalForHighValueInvoice()
+    {
+        var repository = new FakeInvoiceRepository(PendingInvoice("INV-1", 500_000.01m));
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.admin", ApproverRole.Admin);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.PendingApproval, storedInvoice.Status);
+        Assert.Equal("demo.admin", GetFirstApprovedBy(storedInvoice));
+        Assert.Null(storedInvoice.DecidedBy);
+        Assert.Null(storedInvoice.DecidedAt);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_AdminCanCompleteHighValueApprovalAsDistinctSecondApprover()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 500_000.01m);
+        SetFirstApprovedBy(invoice, "demo.manager");
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.admin", ApproverRole.Admin);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.manager", GetFirstApprovedBy(storedInvoice));
+        Assert.Equal("demo.admin", storedInvoice.DecidedBy);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_DirectorCanCompleteHighValueApprovalAfterAdminFirstApproval()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.PendingApproval, 500_000.01m);
+        SetFirstApprovedBy(invoice, "demo.admin");
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.director", ApproverRole.Director);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.admin", GetFirstApprovedBy(storedInvoice));
+        Assert.Equal("demo.director", storedInvoice.DecidedBy);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_AdminCannotApproveInvoiceTheySubmitted()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.admin",
+            amount: 100_000m,
+            approver: "demo.admin",
+            role: ApproverRole.Admin);
+    }
+
+    [Fact]
+    public void Approve_ManagerCannotApproveInvoiceTheySubmitted()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.manager",
+            amount: 30_000m,
+            approver: "demo.manager",
+            role: ApproverRole.Manager);
+    }
+
+    [Fact]
+    public void Approve_DirectorCannotGiveFirstApprovalToInvoiceTheySubmitted()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.director",
+            amount: 600_000m,
+            approver: "demo.director",
+            role: ApproverRole.Director);
+    }
+
+    [Fact]
+    public void Approve_DirectorCannotGiveSecondApprovalToInvoiceTheySubmitted()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.director2",
+            amount: 600_000m,
+            approver: "demo.director2",
+            role: ApproverRole.Director,
+            firstApprovedBy: "demo.manager");
+    }
+
+    [Fact]
+    public void Approve_SubmitterMatchingIgnoresCaseAndSurroundingWhitespace()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.manager",
+            amount: 30_000m,
+            approver: " Demo.Manager ",
+            role: ApproverRole.Manager);
+    }
+
+    [Fact]
+    public void Approve_SubmitterIsDeniedBeforeAmountLimit()
+    {
+        AssertSelfApprovalDeniedWithoutMutation(
+            submittedBy: "demo.manager",
+            amount: 75_000m,
+            approver: "demo.manager",
+            role: ApproverRole.Manager);
+    }
+
+    [Fact]
+    public void Approve_ManagerCanApproveRequesterSubmittedInvoice()
+    {
+        var invoice = PendingInvoiceWithSubmitter("INV-1", 30_000m, "demo.requester");
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.manager", ApproverRole.Manager);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.requester", storedInvoice.SubmittedBy);
+        Assert.Equal("demo.manager", storedInvoice.DecidedBy);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_InvoiceWithoutSubmitterIsUnaffectedBySelfApprovalRule()
+    {
+        var repository = new FakeInvoiceRepository(PendingInvoice("INV-1", 30_000m));
+        var service = new ApprovalService(repository);
+
+        service.Approve("INV-1", "demo.manager", ApproverRole.Manager);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+        Assert.Equal("demo.manager", storedInvoice.DecidedBy);
+        Assert.Null(storedInvoice.SubmittedBy);
+        Assert.Equal(1, repository.UpdateCount);
     }
 
     [Fact]
@@ -184,7 +334,7 @@ public class ApprovalServiceTests
             amount: 1_000m,
             role: (ApproverRole)999,
             username: "demo.user",
-            expectedReason: "Only Managers and Directors may approve invoices.");
+            expectedReason: "Only Managers, Directors, and Admins may approve invoices.");
     }
 
     [Fact]
@@ -288,6 +438,28 @@ public class ApprovalServiceTests
         Assert.Equal(0, repository.UpdateCount);
     }
 
+    private static void AssertSelfApprovalDeniedWithoutMutation(
+        string submittedBy,
+        decimal amount,
+        string approver,
+        ApproverRole role,
+        string? firstApprovedBy = null)
+    {
+        var originalInvoice = PendingInvoiceWithSubmitter(
+            "INV-1", amount, submittedBy, firstApprovedBy);
+        var repository = new FakeInvoiceRepository(originalInvoice);
+        var service = new ApprovalService(repository);
+
+        var exception = Assert.Throws<ApprovalDeniedException>(
+            () => service.Approve("INV-1", approver, role));
+
+        Assert.Equal(
+            "You submitted this invoice, so someone else must approve it.",
+            exception.Message);
+        AssertInvoiceEqual(originalInvoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
     private static Invoice PendingInvoice(string id, decimal amount) =>
         new()
         {
@@ -298,6 +470,25 @@ public class ApprovalServiceTests
             CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc)
         };
 
+    private static Invoice PendingInvoiceWithSubmitter(
+        string id,
+        decimal amount,
+        string? submittedBy,
+        string? firstApprovedBy = null)
+        => new()
+        {
+            Id = id,
+            CustomerName = "Test School",
+            Amount = amount,
+            Status = InvoiceStatus.PendingApproval,
+            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            SubmittedBy = submittedBy,
+            FirstApprovedBy = firstApprovedBy,
+            DecidedBy = "previous.approver",
+            DecidedAt = new DateTime(2025, 1, 2, 0, 0, 0, DateTimeKind.Utc),
+            DecisionNote = "previous decision"
+        };
+
     private static void AssertInvoiceEqual(Invoice expected, Invoice actual)
     {
         Assert.Equal(expected.Id, actual.Id);
@@ -305,6 +496,7 @@ public class ApprovalServiceTests
         Assert.Equal(expected.Amount, actual.Amount);
         Assert.Equal(expected.Status, actual.Status);
         Assert.Equal(expected.CreatedAt, actual.CreatedAt);
+        Assert.Equal(expected.SubmittedBy, actual.SubmittedBy);
         Assert.Equal(expected.FirstApprovedBy, actual.FirstApprovedBy);
         Assert.Equal(expected.DecidedBy, actual.DecidedBy);
         Assert.Equal(expected.DecidedAt, actual.DecidedAt);

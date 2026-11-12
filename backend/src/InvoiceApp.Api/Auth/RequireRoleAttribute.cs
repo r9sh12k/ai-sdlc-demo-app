@@ -22,7 +22,7 @@ public class RequireRoleAttribute : ActionFilterAttribute
         {
             context.Result = new ObjectResult(new
             {
-                error = "Your account does not have permission to perform this action. Sign in with an account that has an allowed role."
+                error = "Your account does not have permission to perform this action."
             })
             {
                 StatusCode = StatusCodes.Status403Forbidden

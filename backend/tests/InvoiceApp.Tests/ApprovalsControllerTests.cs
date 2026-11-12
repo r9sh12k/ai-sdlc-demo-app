@@ -1,9 +1,13 @@
+using System.Reflection;
 using System.Text.Json;
 using InvoiceApp.Api.Auth;
 using InvoiceApp.Api.Controllers;
 using InvoiceApp.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Xunit;
 
 namespace InvoiceApp.Tests;
@@ -48,5 +52,117 @@ public class ApprovalsControllerTests
         Assert.Equal(invoice.DecidedAt, storedInvoice.DecidedAt);
         Assert.Equal(invoice.DecisionNote, storedInvoice.DecisionNote);
         Assert.Equal(0, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_RequesterIsDeniedBeforeInvoiceCanChange()
+    {
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            CustomerName = "Test School",
+            Amount = 30_000m,
+            Status = InvoiceStatus.PendingApproval
+        };
+        var repository = new FakeInvoiceRepository(invoice);
+        var controller = new ApprovalsController(new ApprovalService(repository));
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items[HttpContextExtensions.SessionKey] =
+            new UserSession("demo.requester", "Requester");
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+        var executingContext = ApplyActionRoleFilter("Approve", httpContext, controller);
+
+        var response = Assert.IsType<ObjectResult>(executingContext.Result);
+        Assert.Equal(StatusCodes.Status403Forbidden, response.StatusCode);
+        Assert.Equal(
+            "Your account does not have permission to perform this action.",
+            JsonSerializer.SerializeToElement(response.Value).GetProperty("error").GetString());
+        AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_AdminCanApproveEligibleInvoice()
+    {
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            CustomerName = "Test School",
+            Amount = 100_000m,
+            Status = InvoiceStatus.PendingApproval
+        };
+        var repository = new FakeInvoiceRepository(invoice);
+        var controller = new ApprovalsController(new ApprovalService(repository));
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items[HttpContextExtensions.SessionKey] = new UserSession("demo.admin", "Admin");
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        var filterContext = ApplyActionRoleFilter("Approve", httpContext, controller);
+        Assert.Null(filterContext.Result);
+
+        var result = controller.Approve("INV-1");
+
+        Assert.IsType<OkObjectResult>(result.Result);
+        Assert.Equal(InvoiceStatus.Approved, repository.GetById("INV-1")!.Status);
+        Assert.Equal("demo.admin", repository.GetById("INV-1")!.DecidedBy);
+        Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Reject_AdminIsDeniedBeforeInvoiceCanChange()
+    {
+        var invoice = new Invoice
+        {
+            Id = "INV-1",
+            CustomerName = "Test School",
+            Amount = 30_000m,
+            Status = InvoiceStatus.PendingApproval
+        };
+        var repository = new FakeInvoiceRepository(invoice);
+        var controller = new ApprovalsController(new ApprovalService(repository));
+        var httpContext = new DefaultHttpContext();
+        httpContext.Items[HttpContextExtensions.SessionKey] = new UserSession("demo.admin", "Admin");
+        controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+
+        var filterContext = ApplyActionRoleFilter("Reject", httpContext, controller);
+
+        var response = Assert.IsType<ObjectResult>(filterContext.Result);
+        Assert.Equal(StatusCodes.Status403Forbidden, response.StatusCode);
+        AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
+    private static ActionExecutingContext ApplyActionRoleFilter(
+        string actionName,
+        HttpContext httpContext,
+        ApprovalsController controller)
+    {
+        var action = typeof(ApprovalsController).GetMethod(actionName)!;
+        var requireRole = action.GetCustomAttribute<RequireRoleAttribute>();
+        Assert.NotNull(requireRole);
+
+        var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
+        var executingContext = new ActionExecutingContext(
+            actionContext,
+            new List<IFilterMetadata>(),
+            new Dictionary<string, object?>(),
+            controller);
+
+        requireRole.OnActionExecuting(executingContext);
+        return executingContext;
+    }
+
+    private static void AssertInvoiceEqual(Invoice expected, Invoice actual)
+    {
+        Assert.Equal(expected.Id, actual.Id);
+        Assert.Equal(expected.CustomerName, actual.CustomerName);
+        Assert.Equal(expected.Amount, actual.Amount);
+        Assert.Equal(expected.Status, actual.Status);
+        Assert.Equal(expected.CreatedAt, actual.CreatedAt);
+        Assert.Equal(expected.SubmittedBy, actual.SubmittedBy);
+        Assert.Equal(expected.FirstApprovedBy, actual.FirstApprovedBy);
+        Assert.Equal(expected.DecidedBy, actual.DecidedBy);
+        Assert.Equal(expected.DecidedAt, actual.DecidedAt);
+        Assert.Equal(expected.DecisionNote, actual.DecisionNote);
     }
 }
