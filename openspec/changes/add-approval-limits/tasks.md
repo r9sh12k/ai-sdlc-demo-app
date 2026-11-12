@@ -7,7 +7,7 @@
 
 ## 2. Distinct second approval for high-value invoices
 
-- [ ] 2.1 Record the first approval without changing `PendingApproval`, then require a distinct Director to complete approval; add unit tests for same-user casing/whitespace, a Manager as second approver, unchanged invoice fields, and no repository update on denial; verify with `dotnet test backend/InvoiceApp.sln`.
+- [x] 2.1 Record the first approval without changing `PendingApproval`, then require a distinct Director to complete approval; add unit tests for same-user casing/whitespace, a Manager as second approver, unchanged invoice fields, and no repository update on denial; verify with `dotnet test backend/InvoiceApp.sln`.
 
 ## 3. UI explanation and end-to-end coverage
 

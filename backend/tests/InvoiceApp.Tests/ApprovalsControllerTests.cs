@@ -43,6 +43,7 @@ public class ApprovalsControllerTests
         Assert.Equal(invoice.Amount, storedInvoice.Amount);
         Assert.Equal(invoice.Status, storedInvoice.Status);
         Assert.Equal(invoice.CreatedAt, storedInvoice.CreatedAt);
+        Assert.Equal(invoice.FirstApprovedBy, storedInvoice.FirstApprovedBy);
         Assert.Equal(invoice.DecidedBy, storedInvoice.DecidedBy);
         Assert.Equal(invoice.DecidedAt, storedInvoice.DecidedAt);
         Assert.Equal(invoice.DecisionNote, storedInvoice.DecisionNote);
