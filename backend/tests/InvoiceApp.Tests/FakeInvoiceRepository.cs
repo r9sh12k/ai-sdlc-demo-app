@@ -44,9 +44,12 @@ internal class FakeInvoiceRepository : IInvoiceRepository
         CustomerName = invoice.CustomerName,
         Amount = invoice.Amount,
         Status = invoice.Status,
+        ProjectId = invoice.ProjectId,
         CreatedAt = invoice.CreatedAt,
         SubmittedBy = invoice.SubmittedBy,
         FirstApprovedBy = invoice.FirstApprovedBy,
+        RoutedApprover1 = invoice.RoutedApprover1,
+        RoutedApprover2 = invoice.RoutedApprover2,
         DecidedBy = invoice.DecidedBy,
         DecidedAt = invoice.DecidedAt,
         DecisionNote = invoice.DecisionNote

@@ -21,24 +21,21 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 - Use clear names; no one-letter variables or `flag` parameters.
 - End-to-end tests use page objects and role-based locators (`getByRole`, `getByLabel`), never CSS or XPath selectors.
 
-## Approval limits (`feature/approval-limits`)
+## Organization routing (`add-org-routing`)
 
-- Let a Requester create, submit, and view invoices; deny Requester approve and reject actions.
-- On submit, record the signed-in username as `SubmittedBy`.
-- Let a Manager approve amounts up to and including 50,000.00.
-- Let a Director approve amounts up to and including 500,000.00.
-- Require two distinct approvers above 500,000.00: first a Manager, Director, or Admin, then a distinct Director or Admin.
-- Compare usernames after trimming and ignoring case; never count one user twice.
-- Deny approval by the submitter at either approval stage, for any amount and role, before applying amount limits. Invoices without `SubmittedBy` are unaffected.
-- Use the exact self-approval denial reason: `You submitted this invoice, so someone else must approve it.`
-- Let Admins approve under the Director limits and reject pending invoices with a reason.
-- For a denied approval attempt, throw `ApprovalDeniedException` with an actionable reason; change no fields and do not call `Update`.
-- Test boundaries 50,000.00, 50,000.01, 500,000.00 and 500,000.01.
-- Keep approval rules in `InvoiceApp.Domain`; use no role strings or HTTP types there.
-- Map the session to Domain types in controllers, then call `Handle(...)`.
-- Map `ApprovalDeniedException` in `ApiControllerBase` to `403 { "error": reason }`.
+- Associate each invoice with a project in Business Unit > Account > Project; require project allocation to create an invoice. A project's DM counts as allocated.
+- Route amounts up to and including 50,000.00 to the DM; amounts above 50,000.00 through 500,000.00 to the Business Unit head; amounts above 500,000.00 to the DM then a distinct Business Unit head.
+- If an approver is unavailable, move up through DM, Business Unit head, and Admin. If a candidate is the requester or is at/below the requester's rank, move upward. Use Admin as the fallback second approver when both steps resolve to one person; otherwise fail with `No second approver available`.
+- Only the current routed approver may approve. Admin may approve only when routed, including a distinct second step; Admin may reject any pending invoice. Reject requires a non-empty reason.
+- Compare usernames after trimming and ignoring case; never count one user twice. Keep a self-approval check in `ApprovalService` as a safety net.
+- On submit, snapshot routed approvers and record the signed-in username as `SubmittedBy`.
+- For a denied attempt, throw `ApprovalDeniedException` with an actionable reason; change no fields and do not call `Update`.
+- Test boundaries 50,000.00, 50,000.01, 500,000.00 and 500,000.01; negative tests assert unchanged invoices and `UpdateCount` 0.
+- Keep routing and approval rules in `InvoiceApp.Domain`; use no role strings or HTTP types there.
+- Map the session to Domain types in controllers, then call `Handle(...)`. Map `ApprovalDeniedException` to `403 { "error": reason }`.
 - Validate first and change state last.
-- Retain `FirstApprovedBy` after a second approval. Show `Submitted by <name>` and `Approved by <name>` for one approver or `Approved by <first> and <second>` for two in the invoice list.
+- Scope invoice lists to Requester-owned invoices, DM projects, Business Unit head's BU, or all for Admin. Approval lists include scoped pending invoices plus invoices decided by the caller.
+- Display person identity as `username (username@example.com)` and rejection attribution as `username (email): reason`.
 
 ## Commands
 
@@ -50,10 +47,12 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 ## Demo accounts (not real credentials)
 
 - `demo.manager` / `ChangeMe123!` (role Manager)
+- `demo.manager2` / `ChangeMe123!` (role Manager)
 - `demo.director` / `ChangeMe123!` (role Director)
 - `demo.director2` / `ChangeMe123!` (role Director)
 - `demo.admin` / `ChangeMe123!` (role Admin)
 - `demo.requester` / `ChangeMe123!` (role Requester)
+- `demo.requester2` / `ChangeMe123!` (role Requester)
 
 ## Agent workflow
 

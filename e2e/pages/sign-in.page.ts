@@ -11,6 +11,7 @@ export class SignInPage {
     await this.page.getByLabel('Username').fill(username);
     await this.page.getByLabel('Password').fill(password);
     await this.page.getByRole('button', { name: 'Sign in' }).click();
+    await this.signOutButton.waitFor({ state: 'visible' });
   }
 
   async signOut(): Promise<void> {

@@ -7,37 +7,19 @@ description: Approval role limits, outcomes, and required denial tests.
 
 Follow [AGENTS.md](../../../AGENTS.md); do not duplicate its guidance.
 
-| Role | Amount band | Outcome |
-|---|---:|---|
-| Requester | Any amount or stage | May create, submit, and view invoices; cannot approve or reject |
-| Manager | ≤ 50,000.00 | May approve as the sole approver |
-| Manager | > 50,000.00 through 500,000.00 | Deny |
-| Manager | > 500,000.00 | May be first approver only |
-| Director | ≤ 500,000.00 | May approve as the sole approver |
-| Director | > 500,000.00 | May be first approver; may be second only if distinct |
-| Admin | ≤ 500,000.00 | May approve as the sole approver, using Director limits |
-| Admin | > 500,000.00 | May be first approver; may be second only if distinct |
-| Admin | Any pending invoice with a non-empty reason | May reject |
-| Any role | > 500,000.00, second approval | Require a distinct Director or Admin; prior Manager, Director, or Admin is eligible |
+Approval is routed by project organization, not by role-only amount limits:
 
-Admins may approve and reject pending invoices with a non-empty reason.
-
-On submission, record the signed-in username as `SubmittedBy`. Deny approval by the submitter at either approval stage, for any amount and role. Compare usernames after trimming and ignoring case, and perform this check before amount-limit checks. A denial must use `You submitted this invoice, so someone else must approve it.`, leave every invoice field unchanged, and not call `Update`. If `SubmittedBy` is absent, do not apply the self-approval rule.
-
-Boundaries to test: 50,000.00, 50,000.01, 500,000.00, and 500,000.01.
-Compare usernames after trimming and ignoring case; never count one user twice.
-
-| Case | Expected outcome |
+| Amount | Approval route |
 |---|---|
-| First approver `demo.director`, second `" Demo.Director "` | Deny as the same user |
-| Manager attempts the second approval above 500,000.00 | Deny |
-| Submitter attempts first approval within their role's limit | Deny with the exact self-approval reason |
-| Submitter attempts second approval as a Director after another user approved first | Deny with the exact self-approval reason |
-| Approval attempt on an invoice without `SubmittedBy` | Apply existing role and amount rules without self-approval denial |
-| Requester attempts to approve or reject | Deny; assert invoice unchanged |
-| Each denial, including boundary, role, and self-approval denials | Assert every invoice field equals its pre-attempt value and `UpdateCount` is 0 |
+| ≤ 50,000.00 | Project DM |
+| > 50,000.00 through 500,000.00 | Business Unit head |
+| > 500,000.00 | Project DM, then a distinct Business Unit head |
+| Missing or duplicate candidate | Move upward through DM, Business Unit head, and Admin; Admin may be the distinct second approver |
 
-Test valid distinct Manager→Director and Director→Director approvals above 500,000.00.
-Test valid distinct Manager→Admin and Admin→Director approvals above 500,000.00.
-All denial tests must assert both the actionable denial and the unchanged-invoice invariant.
-Retain `FirstApprovedBy` after the second approval. The invoice list must show `Submitted by <name>` and `Approved by <name>` for one approver or `Approved by <first> and <second>` for two.
+The requester and anyone at or below their routing rank (DM < Business Unit head < Admin) must be skipped. Only the current routed person may approve; Admin does not bypass the route. The current routed approver may reject, and Admin may reject any pending invoice, with a non-empty reason. A self-approval check remains in the Domain service as a safety net.
+
+Compare usernames after trimming and ignoring case; never count one user twice. For every denial, assert its actionable reason, every invoice field unchanged, and `UpdateCount` 0. No validation failure may change state or call `Update`.
+
+Boundaries to test: 50,000.00, 50,000.01, 500,000.00, and 500,000.01. Include requester/lower-rank escalation, missing DMs, distinct high-value approvers, Admin routing/fallback, Admin rejection, non-routed approval/rejection, and empty rejection reasons.
+
+The demo hierarchy is BU-DIGITAL (head `demo.director`) > ACC-ACME > PRJ-PORTAL (DM `demo.manager`) and PRJ-MOBILE (DM `demo.manager2`); BU-ENTERPRISE (head `demo.director2`) > ACC-GLOBEX > PRJ-ERP (no DM). `demo.requester` is allocated to PORTAL and MOBILE, and `demo.requester2` to ERP. Display emails as `<username>@example.com`.

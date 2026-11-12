@@ -6,11 +6,16 @@ namespace InvoiceApp.Api.Controllers;
 public abstract class ApiControllerBase : ControllerBase
 {
     /// <summary>Runs a service call and maps its failures to HTTP status codes.</summary>
-    protected ActionResult<Invoice> Handle(Func<Invoice> action)
+    protected ActionResult<T> Handle<T>(Func<T> action) =>
+        Handle(action, value => Ok(value));
+
+    protected ActionResult<T> Handle<T>(
+        Func<T> action,
+        Func<T, ActionResult<T>> onSuccess)
     {
         try
         {
-            return Ok(action());
+            return onSuccess(action());
         }
         catch (ApprovalDeniedException ex)
         {

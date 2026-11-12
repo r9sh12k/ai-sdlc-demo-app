@@ -7,66 +7,128 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header>
-    <h1>Invoice Approvals</h1>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">IA</span>
+      <h1>Invoice Approvals</h1>
+    </div>
     <div id="session-bar" hidden>
-      <span id="whoami"></span>
-      <button id="sign-out" type="button">Sign out</button>
+      <span class="avatar" id="avatar" aria-hidden="true"></span>
+      <span class="who">
+        <span id="whoami"></span>
+        <span id="role-badge" class="role-badge"></span>
+      </span>
+      <button id="sign-out" type="button" class="ghost">Sign out</button>
     </div>
   </header>
 
   <main>
-    <section id="login-view" aria-labelledby="login-title">
+    <section id="login-view" class="login-card" aria-labelledby="login-title">
       <h2 id="login-title">Sign in</h2>
-      <form id="login-form">
+      <p class="muted">Use one of the demo accounts to explore approval routing.</p>
+      <form id="login-form" class="stack">
         <label for="username">Username</label>
         <input id="username" name="username" autocomplete="username" required>
         <label for="password">Password</label>
         <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <button type="submit">Sign in</button>
-        <p id="login-error" role="alert" hidden></p>
+        <button id="sign-in-button" type="submit">Sign in</button>
+        <p id="login-error" role="alert" class="alert" hidden></p>
       </form>
+      <div class="demo-accounts">
+        <h3 id="demo-accounts-title">Demo accounts</h3>
+        <p class="muted">Choose one to fill the username. The shared demo password is in the README.</p>
+        <ul aria-labelledby="demo-accounts-title">
+          <li><button type="button" class="chip" data-username="demo.requester">demo.requester <span>Requester</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.requester2">demo.requester2 <span>Requester</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.manager">demo.manager <span>Manager</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.manager2">demo.manager2 <span>Manager</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.director">demo.director <span>Director</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.director2">demo.director2 <span>Director</span></button></li>
+          <li><button type="button" class="chip" data-username="demo.admin">demo.admin <span>Admin</span></button></li>
+        </ul>
+      </div>
     </section>
 
     <section id="app-view" hidden>
-      <div role="tablist" aria-label="Sections">
-        <button role="tab" id="tab-invoices" aria-selected="true" aria-controls="invoices-panel" type="button">Invoices</button>
-        <button role="tab" id="tab-approvals" aria-selected="false" aria-controls="approvals-panel" type="button">Approvals</button>
+      <div role="tablist" aria-label="Sections" class="tabs">
+        <button role="tab" id="tab-invoices" aria-selected="true" aria-controls="invoices-panel" type="button">Invoices <span class="count" id="invoices-count"></span></button>
+        <button role="tab" id="tab-approvals" aria-selected="false" aria-controls="approvals-panel" type="button">Approvals <span class="count" id="approvals-count"></span></button>
       </div>
 
-      <section id="invoices-panel" role="tabpanel" aria-labelledby="tab-invoices">
-        <h2>Invoices</h2>
+      <section id="invoices-panel" role="tabpanel" aria-labelledby="tab-invoices" class="panel">
+        <div class="panel-head">
+          <h2>Invoices</h2>
+          <p class="muted">Drafts you create, and invoices in your scope.</p>
+        </div>
 
-        <form id="new-invoice-form">
-          <h3>New invoice</h3>
-          <label for="customer">Customer name</label>
-          <input id="customer" name="customer" required>
-          <label for="amount">Amount</label>
-          <input id="amount" name="amount" type="number" min="0.01" step="0.01" required>
-          <button type="submit">Create invoice</button>
-          <p id="create-error" role="alert" hidden></p>
+        <p id="invoice-notice" role="status" class="notice" hidden></p>
+        <p id="invoice-load-error" role="alert" class="alert" hidden></p>
+        <p id="project-error" role="alert" class="alert" hidden></p>
+
+        <form id="new-invoice-form" class="create-form" aria-labelledby="new-invoice-title" hidden>
+          <h3 id="new-invoice-title">New invoice</h3>
+          <div class="field">
+            <label for="customer">Customer name</label>
+            <input id="customer" name="customer" required>
+          </div>
+          <div class="field">
+            <label for="amount">Amount</label>
+            <input id="amount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required>
+          </div>
+          <div class="field">
+            <label for="project">Project</label>
+            <select id="project" name="project" required></select>
+          </div>
+          <button id="create-invoice" type="submit">Create invoice</button>
+          <p id="create-error" role="alert" class="alert" hidden></p>
         </form>
+        <p id="no-projects" class="muted" hidden>You are not allocated to any projects, so you cannot create invoices.</p>
 
-        <table id="invoices-table">
-          <caption>All invoices</caption>
-          <thead>
-            <tr>
-              <th scope="col">ID</th>
-              <th scope="col">Customer</th>
-              <th scope="col">Amount</th>
-              <th scope="col">Status</th>
-              <th scope="col">Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
+        <div class="table-wrap">
+          <table id="invoices-table">
+            <caption>Invoices in your scope</caption>
+            <colgroup>
+              <col class="col-id"><col class="col-customer"><col class="col-amount"><col class="col-project">
+              <col class="col-person"><col class="col-person"><col class="col-person"><col class="col-person">
+              <col class="col-status"><col class="col-reason"><col class="col-actions">
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Customer</th>
+                <th scope="col" class="num">Amount</th>
+                <th scope="col">Project</th>
+                <th scope="col">Requested By</th>
+                <th scope="col">Approval 1</th>
+                <th scope="col">Approval 2</th>
+                <th scope="col">Waiting on</th>
+                <th scope="col">Status</th>
+                <th scope="col">Rejection reason</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p id="invoices-empty" class="empty" hidden>No invoices yet. Create one above to get started.</p>
       </section>
 
-      <section id="approvals-panel" role="tabpanel" aria-labelledby="tab-approvals" hidden>
-        <h2>Pending approvals</h2>
-        <p id="pending-empty" hidden>Nothing is waiting for approval.</p>
-        <ul id="pending-list"></ul>
-        <p id="decision-error" role="alert" hidden></p>
+      <section id="approvals-panel" role="tabpanel" aria-labelledby="tab-approvals" class="panel" hidden>
+        <div class="panel-head">
+          <h2>Approvals</h2>
+          <p class="muted">Pending invoices in your scope, and invoices you have decided.</p>
+        </div>
+
+        <p id="approval-notice" role="status" class="notice" hidden></p>
+        <p id="decision-error" role="alert" class="alert" hidden></p>
+
+        <h3 id="pending-title" class="list-title">Pending</h3>
+        <ul id="pending-list" class="cards" aria-labelledby="pending-title"></ul>
+        <p id="pending-empty" class="empty" hidden>Nothing is waiting for approval.</p>
+
+        <h3 id="decided-title" class="list-title">Decided</h3>
+        <ul id="decided-list" class="cards" aria-labelledby="decided-title"></ul>
+        <p id="decided-empty" class="empty" hidden>You have not decided any invoices yet.</p>
       </section>
     </section>
   </main>
@@ -74,6 +136,23 @@
   <dialog id="permission-dialog" aria-labelledby="permission-dialog-title">
     <h2 id="permission-dialog-title">Permission denied</h2>
     <p id="permission-message" role="status"></p>
+    <form method="dialog">
+      <button type="submit">Close</button>
+    </form>
+  </dialog>
+
+  <dialog id="decision-confirmation" aria-labelledby="decision-confirmation-title">
+    <h2 id="decision-confirmation-title">Confirm decision</h2>
+    <p id="decision-confirmation-message"></p>
+    <div class="dialog-actions">
+      <button id="cancel-decision" class="secondary" type="button">Cancel</button>
+      <button id="confirm-decision" type="button">Confirm</button>
+    </div>
+  </dialog>
+
+  <dialog id="reason-error-dialog" aria-labelledby="reason-error-title">
+    <h2 id="reason-error-title">Rejection reason required</h2>
+    <p>Enter a reason before rejecting this invoice.</p>
     <form method="dialog">
       <button type="submit">Close</button>
     </form>

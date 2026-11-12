@@ -13,22 +13,37 @@ Open http://localhost:5000 and sign in:
 | User | Password | Role |
 | --- | --- | --- |
 | `demo.manager` | `ChangeMe123!` | Manager |
+| `demo.manager2` | `ChangeMe123!` | Manager |
 | `demo.director` | `ChangeMe123!` | Director |
 | `demo.director2` | `ChangeMe123!` | Director |
 | `demo.admin` | `ChangeMe123!` | Admin |
 | `demo.requester` | `ChangeMe123!` | Requester |
+| `demo.requester2` | `ChangeMe123!` | Requester |
 
 These are demo accounts for a local, in-memory app. They are not real credentials.
+Each demo identity is displayed with an email address of `<username>@example.com`.
+
+## Organization and routing
+
+The demo organization is:
+
+- BU-DIGITAL (head `demo.director`) > ACC-ACME > PRJ-PORTAL (DM `demo.manager`) and PRJ-MOBILE (DM `demo.manager2`)
+- BU-ENTERPRISE (head `demo.director2`) > ACC-GLOBEX > PRJ-ERP (no DM)
+- `demo.requester` is allocated to PRJ-PORTAL and PRJ-MOBILE; `demo.requester2` is allocated to PRJ-ERP.
 
 ## What it does
 
-1. Create an invoice (it starts as a draft).
-2. Submit it for approval.
-3. An approver approves it, or rejects it with a reason.
+1. Create a draft for a project you are allocated to.
+2. Submit it for approval. Only the requester who created a draft can submit it.
+3. The routed approver approves or rejects it with a reason. Above $500,000, two distinct approvals are required.
 
 Invoices move through Draft, Pending Approval, then Approved or Rejected.
 
-Managers may approve invoices up to $50,000. Directors and Admins may approve up to $500,000. Above that amount, two distinct approvers are required: a Manager, Director, or Admin first, then a different Director or Admin. Admins may approve and may reject pending invoices with a reason. Role-permission denials appear in a dismissible modal and are cleared when the session ends.
+Amounts up to and including $50,000 route to the project DM; amounts above $50,000 through $500,000 route to the Business Unit head. Above $500,000, the DM approves first and a distinct Business Unit head approves second. Missing approvers move upward, with Admin as the final fallback. A requester or a person ranked below them is skipped. Admin may approve only when routed to them, and may reject any pending invoice with a reason. Approval and rejection require confirmation; an empty rejection reason displays an error dialog.
+
+The UI shows Submit, Approve and Reject only when the server says the signed-in person may take that action. Approvals are grouped into Pending and Decided. Usernames are matched at sign-in without regard to letter case or surrounding spaces.
+
+Invoice lists are scoped: Requesters see their own invoices, DMs see invoices for their projects, Business Unit heads see invoices in their Business Unit, and Admins see all invoices. Approval lists show pending invoices in the caller's scope and decisions they have made.
 
 ## Tests
 

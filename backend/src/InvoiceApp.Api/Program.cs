@@ -12,6 +12,8 @@ builder.Services
 builder.Services.Configure<DemoUsersOptions>(builder.Configuration);
 builder.Services.AddSingleton<SessionStore>();
 builder.Services.AddSingleton<IInvoiceRepository, InMemoryInvoiceRepository>();
+builder.Services.AddSingleton<IOrgDirectory, InMemoryOrgDirectory>();
+builder.Services.AddScoped<InvoiceAccessService>();
 builder.Services.AddScoped<ApprovalService>();
 
 var app = builder.Build();

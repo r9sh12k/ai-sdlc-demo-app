@@ -23,8 +23,10 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public ActionResult<LoginResponse> Login([FromBody] LoginRequest request)
     {
-        var user = _options.Users.FirstOrDefault(u =>
-            u.Username == request.Username && u.Password == request.Password);
+        var typedUsername = request.Username?.Trim() ?? string.Empty;
+        var user = _options.Users.FirstOrDefault(candidate =>
+            string.Equals(candidate.Username, typedUsername, StringComparison.OrdinalIgnoreCase) &&
+            candidate.Password == request.Password);
 
         if (user is null)
         {
