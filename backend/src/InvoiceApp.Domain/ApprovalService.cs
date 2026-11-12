@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace InvoiceApp.Domain;
 
 /// <summary>
@@ -6,6 +8,9 @@ namespace InvoiceApp.Domain;
 /// </summary>
 public class ApprovalService
 {
+    public const decimal ManagerApprovalLimit = 50_000.00m;
+    public const decimal DirectorApprovalLimit = 500_000.00m;
+
     private readonly IInvoiceRepository _repository;
 
     public ApprovalService(IInvoiceRepository repository)
@@ -28,10 +33,30 @@ public class ApprovalService
         return invoice;
     }
 
-    public Invoice Approve(string invoiceId, string approver)
+    public Invoice Approve(string invoiceId, string approver, ApproverRole role)
     {
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
+
+        if (invoice.Amount > DirectorApprovalLimit)
+        {
+            var limit = DirectorApprovalLimit.ToString("N2", CultureInfo.InvariantCulture);
+            throw new ApprovalDeniedException(
+                $"Invoices above {limit} require two distinct approvers.");
+        }
+
+        if (role == ApproverRole.Admin ||
+            (role != ApproverRole.Manager && role != ApproverRole.Director))
+        {
+            throw new ApprovalDeniedException("Only Managers and Directors may approve invoices.");
+        }
+
+        if (role == ApproverRole.Manager && invoice.Amount > ManagerApprovalLimit)
+        {
+            var limit = ManagerApprovalLimit.ToString("N2", CultureInfo.InvariantCulture);
+            throw new ApprovalDeniedException(
+                $"Managers may approve invoices up to {limit}.");
+        }
 
         invoice.Status = InvoiceStatus.Approved;
         invoice.DecidedBy = approver;
