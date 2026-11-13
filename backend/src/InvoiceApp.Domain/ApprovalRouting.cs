@@ -76,22 +76,37 @@ public static class ApprovalRouting
             return new ApprovalRoute(first, null);
         }
 
-        var firstApprover = FirstAboveRequester(
-            new[] { project.DeliveryManagerUsername, headUsername }.Concat(admins),
+        // Above the Director limit the second step must be a distinct Director (the Business
+        // Unit head, never an Admin). Reserve that person first so the first step escalates
+        // past them, for example to Admin when the project has no DM.
+        var secondApprover = FirstAboveRequester(
+            new[] { headUsername }.Where(
+                username => !admins.Any(admin => SameUser(admin, username))),
             submittedBy,
             requesterRank,
             project,
             businessUnit,
             admins);
-        var secondApprover = FirstAboveRequester(
-            new[] { headUsername }.Concat(admins),
-            submittedBy,
-            requesterRank,
-            project,
-            businessUnit,
-            admins,
-            firstApprover);
-        return new ApprovalRoute(firstApprover, secondApprover);
+        var firstCandidates =
+            new[] { project.DeliveryManagerUsername, headUsername }.Concat(admins).ToArray();
+        var firstApprover = FirstAboveRequester(
+                firstCandidates,
+                submittedBy,
+                requesterRank,
+                project,
+                businessUnit,
+                admins,
+                secondApprover)
+            ?? FirstAboveRequester(
+                firstCandidates,
+                submittedBy,
+                requesterRank,
+                project,
+                businessUnit,
+                admins);
+        return new ApprovalRoute(
+            firstApprover,
+            SameUser(firstApprover, secondApprover) ? null : secondApprover);
     }
 
     private static string? FirstAboveRequester(

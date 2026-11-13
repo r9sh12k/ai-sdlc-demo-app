@@ -101,12 +101,13 @@ Draft ──submit──▶ Pending Approval ──approve (final step)──▶
 | --- | --- |
 | Up to and including $50,000.00 | Project DM |
 | Above $50,000.00 through $500,000.00 | Business Unit head |
-| Above $500,000.00 | Project DM, then a **distinct** Business Unit head |
+| Above $500,000.00 | Project DM, then a **distinct** Director (the Business Unit head) |
 
 - **Missing approvers move upward:** DM → Business Unit head → Admin.
 - **Skipping:** the requester, and anyone at or below the requester's rank (DM < Business Unit head < Admin), is skipped.
-- **Two-step fallback:** above $500,000.00, if both steps would go to the same person, Admin becomes the second approver. If no distinct second approver exists, submit fails with `No second approver available`.
-- **Who may decide:** only the current routed approver may approve. Admin may approve only when routed to them, and may reject any pending invoice. Nobody can approve an invoice they submitted.
+- **Two-step rule:** above $500,000.00 the Business Unit head is reserved as the distinct second approver, and the first step escalates past them. For example, on a project without a DM, or when the DM is the requester, Admin takes the first step. Admin is never the second approver. If no distinct Director is available, submit fails with `No second approver available`.
+- **Role limits:** Managers may approve up to $50,000.00; Directors and Admins up to $500,000.00. Above $500,000.00 a Manager, Director or Admin may give the first approval, but only a Director may give the second.
+- **Who may decide:** only the current routed approver may approve, and Admin may reject any pending invoice. Nobody can approve an invoice they submitted.
 - **Denied actions** return `403 { "error": "<reason the user can act on>" }` and change nothing.
 
 ### Visibility

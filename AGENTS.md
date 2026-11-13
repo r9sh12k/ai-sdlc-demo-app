@@ -25,8 +25,8 @@ Invoice approval demo app: ASP.NET Core 8 Web API with a small static web UI.
 
 - Associate each invoice with a project in Business Unit > Account > Project; require project allocation to create an invoice. A project's DM counts as allocated.
 - Route amounts up to and including 50,000.00 to the DM; amounts above 50,000.00 through 500,000.00 to the Business Unit head; amounts above 500,000.00 to the DM then a distinct Business Unit head.
-- If an approver is unavailable, move up through DM, Business Unit head, and Admin. If a candidate is the requester or is at/below the requester's rank, move upward. Use Admin as the fallback second approver when both steps resolve to one person; otherwise fail with `No second approver available`.
-- Only the current routed approver may approve. Admin may approve only when routed, including a distinct second step; Admin may reject any pending invoice. Reject requires a non-empty reason.
+- If an approver is unavailable, move up through DM, Business Unit head, and Admin for first or single-step approvals. A high-value invoice's second approver must be a distinct Director (the Business Unit head); reserve that Director first so the first step escalates past them (for example to Admin when there is no DM), and never use Admin for the second step. If no distinct Director is available, fail with `No second approver available`.
+- Only the current routed approver may approve. Managers may approve up to 50,000.00; Directors and Admins may approve up to 500,000.00. For amounts above 500,000.00, a Manager, Director, or Admin may provide the first approval, but only a distinct Director may provide the second. Admin may reject any pending invoice. Reject requires a non-empty reason.
 - Compare usernames after trimming and ignoring case; never count one user twice. Keep a self-approval check in `ApprovalService` as a safety net.
 - On submit, snapshot routed approvers and record the signed-in username as `SubmittedBy`.
 - For a denied attempt, throw `ApprovalDeniedException` with an actionable reason; change no fields and do not call `Update`.

@@ -11,14 +11,14 @@ Defines amount- and role-based invoice approval, including distinct two-person a
 ## Requirements
 
 ### Requirement: Approval authority is limited by role, amount, and routed assignment
-The system SHALL allow Managers to approve invoices up to 50,000.00 and Directors and Admins to approve invoices up to 500,000.00, inclusive, when assigned to the current routed step. For invoices above 500,000.00, it SHALL require a Manager, Director, or Admin as first approver and a distinct Director or Admin as second approver, each only when assigned to that routed step. Admin SHALL use the same amount limits, self-approval restriction, and distinct two-approver rules as Directors.
+The system SHALL allow Managers to approve invoices up to 50,000.00 and Directors and Admins to approve invoices up to 500,000.00, inclusive, when assigned to the current routed step. For invoices above 500,000.00, a Manager, Director, or Admin MAY provide the first approval, but a distinct Director MUST provide the second approval when assigned to that routed step. Admin SHALL retain the existing routed approval flow, except Admin MUST NOT provide a high-value invoice's second approval.
 
 #### Scenario: Manager approves 50,000.00
 - **WHEN** a Manager assigned to the current step approves an invoice for 50,000.00
 - **THEN** the invoice is approved
 
-#### Scenario: Manager cannot approve 50,000.01 when the Director is routed
-- **WHEN** a Manager attempts to approve an invoice for 50,000.01 while it is routed to the Director
+#### Scenario: Manager cannot approve 50,000.01
+- **WHEN** a Manager attempts to approve an invoice for 50,000.01, even if routed to that Manager
 - **THEN** the attempt is denied with a clear reason and the invoice remains unchanged
 
 #### Scenario: Director approves 500,000.00 when routed
@@ -37,9 +37,9 @@ The system SHALL allow Managers to approve invoices up to 50,000.00 and Director
 - **WHEN** a Manager attempts to complete approval of an invoice for 500,000.01 after its first approval
 - **THEN** the attempt is denied with a clear reason and the invoice remains unchanged
 
-#### Scenario: Admin completes a high-value approval as a distinct second approver
-- **WHEN** an Admin different from the first approver is assigned as the second routed approver for an invoice above 500,000.00
-- **THEN** the invoice is approved and retains the first approver attribution
+#### Scenario: Admin cannot complete a high-value second approval
+- **WHEN** an Admin is assigned as the second routed approver for an invoice above 500,000.00
+- **THEN** the attempt is denied, the invoice remains unchanged, and no update is saved
 
 #### Scenario: Director completes a high-value approval after Admin first approval
 - **WHEN** a Director assigned as the second routed approver approves an invoice for 500,000.01 after a different Admin provided the first approval
@@ -95,14 +95,14 @@ A self-approval denial SHALL return `You submitted this invoice, so someone else
 - **THEN** the self-approval rule does not deny the attempt
 
 ### Requirement: High-value approvals require two distinct approvers
-For an invoice above 500,000.00, the system SHALL require a Manager, Director, or Admin first and a distinct Director or Admin second, with each person assigned to the corresponding routed step. Usernames SHALL be compared after trimming and ignoring case. The system SHALL retain `FirstApprovedBy` when the second approval completes.
+For an invoice above 500,000.00, the system SHALL require a Manager, Director, or Admin first and a distinct Director second, with each person assigned to the corresponding routed step. Usernames SHALL be compared after trimming and ignoring case. The system SHALL retain `FirstApprovedBy` when the second approval completes.
 
 #### Scenario: The same user cannot approve twice with different casing
 - **WHEN** the first approver attempts a second approval using the same username with different casing or surrounding whitespace
 - **THEN** the attempt is denied and the invoice remains unchanged
 
-#### Scenario: Second approval retains the first approver
-- **WHEN** a distinct Director or Admin assigned to the second step completes a high-value invoice's approval
+#### Scenario: Director second approval retains the first approver
+- **WHEN** a distinct Director assigned to the second step completes a high-value invoice's approval
 - **THEN** the invoice remains approved and retains `FirstApprovedBy` alongside the second approver
 
 ### Requirement: Invoice list attributes submissions and approvals

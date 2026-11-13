@@ -144,9 +144,23 @@ public class ApprovalService
         }
 
         if (invoice.Amount > DirectorApprovalLimit &&
-            ApprovalRouting.SameUser(invoice.FirstApprovedBy, approver))
+            !string.IsNullOrWhiteSpace(invoice.FirstApprovedBy))
         {
-            return "A different person must provide the second approval.";
+            if (ApprovalRouting.SameUser(invoice.FirstApprovedBy, approver))
+            {
+                return "A different person must provide the second approval.";
+            }
+
+            if (role != ApproverRole.Director)
+            {
+                return "Only a Director may provide the second approval.";
+            }
+        }
+        else if (role == ApproverRole.Manager &&
+            invoice.Amount > ManagerApprovalLimit &&
+            invoice.Amount <= DirectorApprovalLimit)
+        {
+            return "Managers may only approve invoices up to 50,000.00.";
         }
 
         return WaitingForSomeoneElse(invoice, approver);

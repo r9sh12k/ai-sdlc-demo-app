@@ -99,6 +99,43 @@ public class ApprovalServiceTests
     }
 
     [Fact]
+    public void Submit_HighValueWithoutDeliveryManagerRoutesAdminThenDirector()
+    {
+        var draft = InvoiceWith("INV-1", InvoiceStatus.Draft, 600_000m, "PRJ-ERP");
+        draft.SubmittedBy = "demo.requester2";
+        var repository = new FakeInvoiceRepository(draft);
+        var service = ServiceFor(repository);
+
+        service.Submit("INV-1", "demo.requester2");
+        service.Approve("INV-1", "demo.admin", ApproverRole.Admin);
+        service.Approve("INV-1", "demo.director2", ApproverRole.Director);
+
+        var storedInvoice = repository.GetById("INV-1")!;
+        Assert.Equal("demo.admin", storedInvoice.RoutedApprover1);
+        Assert.Equal("demo.director2", storedInvoice.RoutedApprover2);
+        Assert.Equal("demo.admin", storedInvoice.FirstApprovedBy);
+        Assert.Equal("demo.director2", storedInvoice.DecidedBy);
+        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
+    }
+
+    [Fact]
+    public void Submit_DoesNotUseAdminAsHighValueSecondApprover()
+    {
+        var invoice = InvoiceWith("INV-1", InvoiceStatus.Draft, 600_000m);
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-DIGITAL", null);
+        var repository = new FakeInvoiceRepository(invoice);
+        var service = ServiceFor(repository, directory);
+
+        var exception = Assert.Throws<ApprovalDeniedException>(
+            () => service.Submit("INV-1", "demo.requester"));
+
+        Assert.Equal("No second approver available", exception.Message);
+        AssertInvoiceEqual(invoice, repository.GetById("INV-1")!);
+        Assert.Equal(0, repository.UpdateCount);
+    }
+
+    [Fact]
     public void Approve_ManagerCanApproveAtSingleApproverLimit()
     {
         var repository = PendingRepository(50_000.00m);
@@ -120,7 +157,20 @@ public class ApprovalServiceTests
             amount: 50_000.01m,
             username: "demo.manager",
             role: ApproverRole.Manager,
-            expectedReason: "This invoice is waiting for demo.director.");
+            expectedReason: "Managers may only approve invoices up to 50,000.00.");
+    }
+
+    [Fact]
+    public void Approve_ManagerCannotApproveMidValueInvoiceEvenWhenRouted()
+    {
+        var invoice = PendingInvoice(50_000.01m);
+        invoice.RoutedApprover1 = "demo.manager";
+
+        AssertApprovalDeniedWithoutMutation(
+            invoice,
+            "demo.manager",
+            ApproverRole.Manager,
+            "Managers may only approve invoices up to 50,000.00.");
     }
 
     [Fact]
@@ -150,7 +200,7 @@ public class ApprovalServiceTests
             invoice,
             "demo.manager",
             ApproverRole.Manager,
-            "This invoice is waiting for demo.director.");
+            "Managers may only approve invoices up to 50,000.00.");
     }
 
     [Fact]
@@ -249,21 +299,50 @@ public class ApprovalServiceTests
     }
 
     [Fact]
-    public void Approve_AdminCanCompleteHighValueApprovalWhenRoutedAsDistinctSecondApprover()
+    public void Approve_AdminMayProvideFirstHighValueApprovalWhenRouted()
     {
-        var invoice = PendingInvoice(600_000m, submittedBy: "demo.manager");
-        invoice.RoutedApprover1 = "demo.director";
-        invoice.RoutedApprover2 = "demo.admin";
-        invoice.FirstApprovedBy = "demo.director";
+        var invoice = PendingInvoice(600_000m);
+        invoice.RoutedApprover1 = "demo.admin";
+        invoice.RoutedApprover2 = "demo.director";
         var repository = new FakeInvoiceRepository(invoice);
         var service = ServiceFor(repository);
 
         service.Approve("INV-1", "demo.admin", ApproverRole.Admin);
 
         var storedInvoice = repository.GetById("INV-1")!;
-        Assert.Equal(InvoiceStatus.Approved, storedInvoice.Status);
-        Assert.Equal("demo.admin", storedInvoice.DecidedBy);
+        Assert.Equal(InvoiceStatus.PendingApproval, storedInvoice.Status);
+        Assert.Equal("demo.admin", storedInvoice.FirstApprovedBy);
         Assert.Equal(1, repository.UpdateCount);
+    }
+
+    [Fact]
+    public void Approve_ManagerCannotCompleteHighValueApprovalEvenWhenRoutedAsSecondApprover()
+    {
+        var invoice = PendingInvoice(600_000m);
+        invoice.RoutedApprover1 = "demo.director";
+        invoice.RoutedApprover2 = "demo.manager";
+        invoice.FirstApprovedBy = "demo.director";
+
+        AssertApprovalDeniedWithoutMutation(
+            invoice,
+            "demo.manager",
+            ApproverRole.Manager,
+            "Only a Director may provide the second approval.");
+    }
+
+    [Fact]
+    public void Approve_AdminCannotCompleteHighValueApprovalAsSecondApprover()
+    {
+        var invoice = PendingInvoice(600_000m, submittedBy: "demo.manager");
+        invoice.RoutedApprover1 = "demo.director";
+        invoice.RoutedApprover2 = "demo.admin";
+        invoice.FirstApprovedBy = "demo.director";
+
+        AssertApprovalDeniedWithoutMutation(
+            invoice,
+            "demo.admin",
+            ApproverRole.Admin,
+            "Only a Director may provide the second approval.");
     }
 
     [Theory]
@@ -573,6 +652,17 @@ public class ApprovalServiceTests
 
         Assert.False(service.CanApprove(invoice, "demo.manager", ApproverRole.Manager));
         Assert.True(service.CanApprove(invoice, "demo.director", ApproverRole.Director));
+    }
+
+    [Fact]
+    public void CanApprove_AdminCannotCompleteHighValueSecondStep()
+    {
+        var invoice = RoutedPendingInvoice(600_000m);
+        invoice.RoutedApprover2 = "demo.admin";
+        invoice.FirstApprovedBy = "demo.manager";
+        var service = ServiceFor(new FakeInvoiceRepository());
+
+        Assert.False(service.CanApprove(invoice, "demo.admin", ApproverRole.Admin));
     }
 
     [Theory]

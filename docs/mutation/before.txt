@@ -1,42 +1,43 @@
 
-   _____ _              _               _   _ ______ _______ ┬á
-  / ____| |            | |             | \ | |  ____|__   __|┬á
- | (___ | |_ _ __ _   _| | _____ _ __  |  \| | |__     | |   ┬á
-  \___ \| __| '__| | | | |/ / _ \ '__| | . ` |  __|    | |   ┬á
-  ____) | |_| |  | |_| |   <  __/ |    | |\  | |____   | |   ┬á
- |_____/ \__|_|   \__, |_|\_\___|_| (_)|_| \_|______|  |_|   ┬á
-                   __/ |                                     ┬á
-                  |___/                                      ┬á
+   _____ _              _               _   _ ______ _______  
+  / ____| |            | |             | \ | |  ____|__   __| 
+ | (___ | |_ _ __ _   _| | _____ _ __  |  \| | |__     | |    
+  \___ \| __| '__| | | | |/ / _ \ '__| | . ` |  __|    | |    
+  ____) | |_| |  | |_| |   <  __/ |    | |\  | |____   | |    
+ |_____/ \__|_|   \__, |_|\_\___|_| (_)|_| \_|______|  |_|    
+                   __/ |                                      
+                  |___/                                       
 
 
 Version: 4.13.0
 
+[23:36:33 INF] Analysis starting.
+[23:36:33 INF] Analyzing 1 test project(s).
+[23:36:37 INF] Found project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj to mutate.
+[23:36:37 INF] Analysis complete.
+[23:36:37 INF] Building test project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests\InvoiceApp.Tests.csproj (1/1)
 A new version of Stryker.NET (5.1.0) is available. Please consider upgrading 
 using `dotnet tool update -g dotnet-stryker`
 
-[23:15:03 INF] Analysis starting.
-[23:15:03 INF] Analyzing 1 test project(s).
-[23:15:06 INF] Found project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj to mutate.
-[23:15:06 INF] Analysis complete.
-[23:15:06 INF] Building test project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests\InvoiceApp.Tests.csproj (1/1)
-[23:15:06 INF] Building project InvoiceApp.Tests.csproj using dotnet build InvoiceApp.Tests.csproj -c Debug --property:Platform=AnyCPU (directory C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests.)
-[23:15:12 INF] Number of tests found: 101 for project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj. Initial test run started.
-[23:15:15 INF] 278 mutants created
-[23:15:15 INF] Capture mutant coverage using 'CoverageBasedTest' mode.
+[23:36:37 INF] Building project InvoiceApp.Tests.csproj using dotnet build InvoiceApp.Tests.csproj -c Debug --property:Platform=AnyCPU (directory C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests.)
+[23:36:45 INF] Number of tests found: 140 for project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj. Initial test run started.
+[23:36:48 INF] 278 mutants created
+[23:36:48 INF] Capture mutant coverage using 'CoverageBasedTest' mode.
 Hint: by passing "--open-report or -o" the report will open automatically and 
 update the report in real-time.
-[23:15:15 INF] 31    mutants got status NoCoverage.   Reason: Not covered by any test.
-[23:15:15 INF] 42    mutants got status Ignored.      Reason: Removed by block already covered filter
-[23:15:15 INF] 73    total mutants are skipped for the above mentioned reasons
-[23:15:15 INF] 205   total mutants will be tested
+[23:36:49 INF] 1     mutants got status Ignored.      Reason: Blank candidates have rank zero and fail the following rank check.
+[23:36:49 INF] 1     mutants got status Ignored.      Reason: Blank usernames have rank zero in the final fallback too.
+[23:36:49 INF] 42    mutants got status Ignored.      Reason: Removed by block already covered filter
+[23:36:49 INF] 44    total mutants are skipped for the above mentioned reasons
+[23:36:49 INF] 234   total mutants will be tested
 
-Killed:   183
-Survived:  22
+Killed:   234
+Survived:   0
 Timeout:    0
 
 Your html report has been generated at:
 file://C:/Users/Rishab/Desktop/final/ai-sdlc-demo-app/backend/tests/InvoiceApp.T
-ests/StrykerOutput/2026-11-12.23-15-03/reports/mutation-report.html
+ests/StrykerOutput/2026-11-12.23-36-33/reports/mutation-report.html
 You can open it in your browser of choice.
-[23:16:07 INF] Time Elapsed 00:01:04.5941211
-[23:16:07 INF] The final mutation score is 77.54 %
+[23:37:48 INF] Time Elapsed 00:01:14.5482317
+[23:37:48 INF] The final mutation score is 100.00 %

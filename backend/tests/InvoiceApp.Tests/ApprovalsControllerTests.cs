@@ -41,7 +41,7 @@ public class ApprovalsControllerTests
         var response = Assert.IsType<ObjectResult>(result.Result);
         Assert.Equal(StatusCodes.Status403Forbidden, response.StatusCode);
         Assert.Equal(
-            "This invoice is waiting for demo.director.",
+            "Managers may only approve invoices up to 50,000.00.",
             JsonSerializer.SerializeToElement(response.Value).GetProperty("error").GetString());
         var storedInvoice = repository.GetById("INV-1")!;
         Assert.Equal(invoice.Id, storedInvoice.Id);

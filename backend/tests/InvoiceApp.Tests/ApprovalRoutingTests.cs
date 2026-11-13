@@ -137,7 +137,7 @@ public class ApprovalRoutingTests
     }
 
     [Fact]
-    public void NextApprover_UsesAdminForSecondHighValueApprovalWhenHeadIsUnavailable()
+    public void NextApprover_DoesNotUseAdminForSecondHighValueApprovalWhenHeadIsUnavailable()
     {
         var invoice = PendingInvoice(600_000m);
         var directory = FakeOrgDirectory.CreateDemo()
@@ -148,7 +148,22 @@ public class ApprovalRoutingTests
         var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
 
         Assert.Equal("demo.manager", firstApprover);
-        Assert.Equal("demo.admin", secondApprover);
+        Assert.Null(secondApprover);
+    }
+
+    [Fact]
+    public void NextApprover_DoesNotUseAdminAsSecondWhenAdminIsBusinessUnitHead()
+    {
+        var invoice = PendingInvoice(600_000m);
+        var directory = FakeOrgDirectory.CreateDemo()
+            .WithBusinessUnitHead("BU-DIGITAL", "demo.admin");
+
+        var firstApprover = ApprovalRouting.NextApprover(invoice, directory);
+        invoice.FirstApprovedBy = firstApprover;
+        var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.manager", firstApprover);
+        Assert.Null(secondApprover);
     }
 
     [Fact]
@@ -174,7 +189,7 @@ public class ApprovalRoutingTests
     }
 
     [Fact]
-    public void NextApprover_EscalatesManagerSubmitterToDirectorThenAdminAboveDirectorLimit()
+    public void NextApprover_ReservesDirectorForSecondStepWhenRequesterIsDeliveryManager()
     {
         var invoice = PendingInvoice(600_000m, submittedBy: "demo.manager");
         var directory = FakeOrgDirectory.CreateDemo();
@@ -183,8 +198,36 @@ public class ApprovalRoutingTests
         invoice.FirstApprovedBy = firstApprover;
         var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
 
-        Assert.Equal("demo.director", firstApprover);
-        Assert.Equal("demo.admin", secondApprover);
+        Assert.Equal("demo.admin", firstApprover);
+        Assert.Equal("demo.director", secondApprover);
+    }
+
+    [Fact]
+    public void NextApprover_UsesDirectorAsSecondWhenNoAdminsAreConfigured()
+    {
+        var invoice = PendingInvoice(600_000m);
+        var directory = FakeOrgDirectory.CreateDemo().WithoutAdmins();
+
+        var firstApprover = ApprovalRouting.NextApprover(invoice, directory);
+        invoice.FirstApprovedBy = firstApprover;
+        var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.manager", firstApprover);
+        Assert.Equal("demo.director", secondApprover);
+    }
+
+    [Fact]
+    public void NextApprover_ReservesDirectorForSecondStepWhenProjectHasNoDeliveryManager()
+    {
+        var invoice = PendingInvoice(600_000m, "PRJ-ERP", submittedBy: "demo.requester2");
+        var directory = FakeOrgDirectory.CreateDemo();
+
+        var firstApprover = ApprovalRouting.NextApprover(invoice, directory);
+        invoice.FirstApprovedBy = firstApprover;
+        var secondApprover = ApprovalRouting.NextApprover(invoice, directory);
+
+        Assert.Equal("demo.admin", firstApprover);
+        Assert.Equal("demo.director2", secondApprover);
     }
 
     [Fact]

@@ -11,33 +11,34 @@
 
 Version: 4.13.0
 
-[23:36:33 INF] Analysis starting.
-[23:36:33 INF] Analyzing 1 test project(s).
-[23:36:37 INF] Found project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj to mutate.
-[23:36:37 INF] Analysis complete.
-[23:36:37 INF] Building test project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests\InvoiceApp.Tests.csproj (1/1)
 A new version of Stryker.NET (5.1.0) is available. Please consider upgrading 
 using `dotnet tool update -g dotnet-stryker`
 
-[23:36:37 INF] Building project InvoiceApp.Tests.csproj using dotnet build InvoiceApp.Tests.csproj -c Debug --property:Platform=AnyCPU (directory C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\tests\InvoiceApp.Tests.)
-[23:36:45 INF] Number of tests found: 140 for project C:\Users\Rishab\Desktop\final\ai-sdlc-demo-app\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj. Initial test run started.
-[23:36:48 INF] 278 mutants created
-[23:36:48 INF] Capture mutant coverage using 'CoverageBasedTest' mode.
+[09:20:05 INF] Analysis starting.
+[09:20:05 INF] Analyzing 1 test project(s).
+[09:20:07 INF] Found project C:\Users\Rishab\.copilot\session-state\c2a45b8d-a193-422c-824f-8ad475cdcf71\files\approval-limits-pr\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj to mutate.
+[09:20:07 INF] Analysis complete.
+[09:20:07 INF] Building test project C:\Users\Rishab\.copilot\session-state\c2a45b8d-a193-422c-824f-8ad475cdcf71\files\approval-limits-pr\backend\tests\InvoiceApp.Tests\InvoiceApp.Tests.csproj (1/1)
+[09:20:07 INF] Building project InvoiceApp.Tests.csproj using dotnet build InvoiceApp.Tests.csproj -c Debug --property:Platform=AnyCPU (directory C:\Users\Rishab\.copilot\session-state\c2a45b8d-a193-422c-824f-8ad475cdcf71\files\approval-limits-pr\backend\tests\InvoiceApp.Tests.)
+[09:20:13 INF] Number of tests found: 149 for project C:\Users\Rishab\.copilot\session-state\c2a45b8d-a193-422c-824f-8ad475cdcf71\files\approval-limits-pr\backend\src\InvoiceApp.Domain\InvoiceApp.Domain.csproj. Initial test run started.
+[09:20:15 INF] 301 mutants created
+[09:20:15 INF] Capture mutant coverage using 'CoverageBasedTest' mode.
 Hint: by passing "--open-report or -o" the report will open automatically and 
 update the report in real-time.
-[23:36:49 INF] 1     mutants got status Ignored.      Reason: Blank candidates have rank zero and fail the following rank check.
-[23:36:49 INF] 1     mutants got status Ignored.      Reason: Blank usernames have rank zero in the final fallback too.
-[23:36:49 INF] 42    mutants got status Ignored.      Reason: Removed by block already covered filter
-[23:36:49 INF] 44    total mutants are skipped for the above mentioned reasons
-[23:36:49 INF] 234   total mutants will be tested
+[09:20:16 INF] 1     mutants got status Ignored.      Reason: Blank candidates have rank zero and fail the following rank check.
+[09:20:16 INF] 1     mutants got status Ignored.      Reason: Blank usernames have rank zero in the final fallback too.
+[09:20:16 INF] 45    mutants got status Ignored.      Reason: Removed by block already covered filter
+[09:20:16 INF] 47    total mutants are skipped for the above mentioned reasons
+[09:20:16 INF] 254   total mutants will be tested
 
-Killed:   234
+Killed:   254
 Survived:   0
 Timeout:    0
 
 Your html report has been generated at:
-file://C:/Users/Rishab/Desktop/final/ai-sdlc-demo-app/backend/tests/InvoiceApp.T
-ests/StrykerOutput/2026-11-12.23-36-33/reports/mutation-report.html
+]8;id=17833487;file://C:/Users/Rishab/.copilot/session-state/c2a45b8d-a193-422c-824f-8ad475cdcf71/files/approval-limits-pr/backend/tests/InvoiceApp.Tests/StrykerOutput/2026-11-13.09-20-04/reports/mutation-report.html\C:\Users\Rishab\.copilot\session-state\c2a45b8d-a193-422c-824f-8ad475cdcf71\file]8;;\
+]8;id=43651257;file://C:/Users/Rishab/.copilot/session-state/c2a45b8d-a193-422c-824f-8ad475cdcf71/files/approval-limits-pr/backend/tests/InvoiceApp.Tests/StrykerOutput/2026-11-13.09-20-04/reports/mutation-report.html\s\approval-limits-pr\backend\tests\InvoiceApp.Tests\StrykerOutput\2026-11-13.09-]8;;\
+]8;id=1914002652;file://C:/Users/Rishab/.copilot/session-state/c2a45b8d-a193-422c-824f-8ad475cdcf71/files/approval-limits-pr/backend/tests/InvoiceApp.Tests/StrykerOutput/2026-11-13.09-20-04/reports/mutation-report.html\20-04\reports\mutation-report.html]8;;\
 You can open it in your browser of choice.
-[23:37:48 INF] Time Elapsed 00:01:14.5482317
-[23:37:48 INF] The final mutation score is 100.00 %
+[09:21:15 INF] Time Elapsed 00:01:10.4421709
+[09:21:15 INF] The final mutation score is 100.00 %
